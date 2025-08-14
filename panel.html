@@ -120,13 +120,22 @@
             const logoutBtn = document.getElementById('logout-btn');
 
             let products = [];
+            let loadFailed = false;
 
             // --- Carga y Renderizado de Productos ---
             async function loadProducts() {
                 try {
-                    // Cargar productos desde Firestore
-                    const snapshot = await getDocs(window.productsCollection);
-                    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // En un escenario real, aquí harías un fetch a tu API de backend.
+                    // Para este ejemplo, usamos localStorage como una base de datos simulada.
+                    const storedProducts = localStorage.getItem('products');
+                    if (storedProducts) {
+                        products = JSON.parse(storedProducts);
+                    } else {
+                        // Si no hay nada en localStorage, carga desde el JSON inicial
+                        const response = await fetch('products.json');
+                        products = await response.json();
+                        localStorage.setItem('products', JSON.stringify(products));
+                    }
                     renderProducts();
                 } catch (error) {
                     console.error("Error al cargar productos:", error);
@@ -137,7 +146,10 @@
             function renderProducts() {
                 productListContainer.innerHTML = '';
                 if (products.length === 0) {
-                    productListContainer.innerHTML = '<p class="text-center text-gray-500">No hay productos para mostrar. ¡Agrega el primero!</p>';
+                    const message = loadFailed
+                        ? 'No se pudieron cargar los productos iniciales. Comienza agregando uno nuevo.'
+                        : 'No hay productos para mostrar. ¡Agrega el primero!';
+                    productListContainer.innerHTML = `<p class="text-center text-gray-500">${message}</p>`;
                     return;
                 }
 

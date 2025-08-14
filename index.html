@@ -211,6 +211,10 @@
                     productCard.className = 'product-card group relative flex flex-col cursor-pointer';
                     productCard.dataset.productId = product.id;
                     
+                    const imageSrc = Array.isArray(product.images) && product.images.length
+                        ? product.images[0]
+                        : product.image;
+
                     productCard.innerHTML = `
                         <div class="relative overflow-hidden rounded-lg">
                             <img src="${imgSrc}" alt="${product.name}" class="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105"
