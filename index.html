@@ -206,13 +206,15 @@
                     return;
                 }
                 productsToRender.forEach(product => {
+                    const imgSrc = product.images && product.images.length ? product.images[0] : 'https://via.placeholder.com/300x300?text=Sin+Imagen';
                     const productCard = document.createElement('div');
                     productCard.className = 'product-card group relative flex flex-col cursor-pointer';
                     productCard.dataset.productId = product.id;
                     
                     productCard.innerHTML = `
                         <div class="relative overflow-hidden rounded-lg">
-                            <img src="${product.image}" alt="${product.name}" class="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105">
+                            <img src="${imgSrc}" alt="${product.name}" class="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105"
+                                onerror="this.src='https://via.placeholder.com/300x300?text=Sin+Imagen'">
                         </div>
                         <div class="pt-4 flex flex-col">
                             <h4 class="text-base font-semibold text-brand-dark">${product.name}</h4>
@@ -229,8 +231,8 @@
                 searchBar.addEventListener('input', () => {
                     const searchTerm = searchBar.value.toLowerCase();
                     const filtered = allProducts.filter(p => 
-                        p.name.toLowerCase().includes(searchTerm) || 
-                        p.description.toLowerCase().includes(searchTerm)
+                        (p.name && p.name.toLowerCase().includes(searchTerm)) || 
+                        (p.description && p.description.toLowerCase().includes(searchTerm))
                     );
                     renderProducts(filtered);
                 });
@@ -253,22 +255,29 @@
                     productName.textContent = product.name;
                     productPrice.textContent = product.price;
                     productDescription.textContent = product.description;
-                    mainImage.src = product.images[0];
+                    mainImage.src = product.images && product.images.length ? product.images[0] : 'https://via.placeholder.com/300x300?text=Sin+Imagen';
                     mainImage.alt = product.name;
-                    
+                    mainImage.onerror = function() {
+                        this.src = 'https://via.placeholder.com/300x300?text=Sin+Imagen';
+                    };
                     thumbnailContainer.innerHTML = '';
-                    product.images.forEach(imgSrc => {
-                        const thumb = document.createElement('img');
-                        thumb.src = imgSrc;
-                        thumb.className = 'w-full h-20 object-cover rounded-md cursor-pointer border-2 hover:border-brand-primary';
-                        thumb.classList.toggle('border-brand-primary', imgSrc === product.images[0]);
-                        thumb.addEventListener('click', () => {
-                            mainImage.src = imgSrc;
-                            thumbnailContainer.querySelectorAll('img').forEach(i => i.classList.remove('border-brand-primary'));
-                            thumb.classList.add('border-brand-primary');
+                    if (product.images && product.images.length) {
+                        product.images.forEach(imgSrc => {
+                            const thumb = document.createElement('img');
+                            thumb.src = imgSrc;
+                            thumb.className = 'w-full h-20 object-cover rounded-md cursor-pointer border-2 hover:border-brand-primary';
+                            thumb.classList.toggle('border-brand-primary', imgSrc === product.images[0]);
+                            thumb.onerror = function() {
+                                this.src = 'https://via.placeholder.com/80x80?text=Sin+Imagen';
+                            };
+                            thumb.addEventListener('click', () => {
+                                mainImage.src = imgSrc;
+                                thumbnailContainer.querySelectorAll('img').forEach(i => i.classList.remove('border-brand-primary'));
+                                thumb.classList.add('border-brand-primary');
+                            });
+                            thumbnailContainer.appendChild(thumb);
                         });
-                        thumbnailContainer.appendChild(thumb);
-                    });
+                    }
 
                     const message = encodeURIComponent(`¡Hola! Estoy interesado/a en el producto: ${product.name}`);
                     whatsappBtn.href = `https://wa.me/${whatsappNumber}?text=${message}`;

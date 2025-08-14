@@ -27,6 +27,20 @@
             }
         }
     </script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuración de Firebase (igual que en index.html)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const productsCollection = collection(db, `/artifacts/${appId}/public/data/products`);
+
+        window.db = db;
+        window.productsCollection = productsCollection;
+    </script>
 </head>
 <body class="bg-brand-light">
 
@@ -110,17 +124,9 @@
             // --- Carga y Renderizado de Productos ---
             async function loadProducts() {
                 try {
-                    // En un escenario real, aquí harías un fetch a tu API de backend.
-                    // Para este ejemplo, usamos localStorage como una base de datos simulada.
-                    const storedProducts = localStorage.getItem('products');
-                    if (storedProducts) {
-                        products = JSON.parse(storedProducts);
-                    } else {
-                        // Si no hay nada en localStorage, carga desde el JSON inicial
-                        const response = await fetch('products.json');
-                        products = await response.json();
-                        localStorage.setItem('products', JSON.stringify(products));
-                    }
+                    // Cargar productos desde Firestore
+                    const snapshot = await getDocs(window.productsCollection);
+                    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderProducts();
                 } catch (error) {
                     console.error("Error al cargar productos:", error);
@@ -215,13 +221,12 @@
                 window.location.href = 'admin.html';
             });
 
-            productForm.addEventListener('submit', function(event) {
+            productForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const id = document.getElementById('product-id').value;
                 const imageUrls = Array.from(document.querySelectorAll('.product-image-url')).map(input => input.value).filter(url => url);
 
                 const productData = {
-                    id: id ? parseInt(id) : Date.now(), // Nuevo ID si es un producto nuevo
                     name: document.getElementById('product-name').value,
                     price: document.getElementById('product-price').value,
                     description: document.getElementById('product-description').value,
@@ -229,21 +234,22 @@
                     images: imageUrls
                 };
 
-                if (id) {
-                    // Editar
-                    const index = products.findIndex(p => p.id == id);
-                    products[index] = productData;
-                } else {
-                    // Agregar
-                    products.push(productData);
+                try {
+                    if (id) {
+                        // Editar producto en Firestore
+                        const productDoc = doc(window.db, `/artifacts/${appId}/public/data/products/${id}`);
+                        await updateDoc(productDoc, productData);
+                    } else {
+                        // Agregar producto a Firestore
+                        await addDoc(window.productsCollection, productData);
+                    }
+                    alert('¡Producto guardado! La tienda se actualizará online.');
+                    await loadProducts();
+                    closeModal();
+                } catch (error) {
+                    alert('Error al guardar el producto.');
+                    console.error(error);
                 }
-                
-                // Simula el guardado en el backend
-                localStorage.setItem('products', JSON.stringify(products));
-                alert('¡Producto guardado! La tienda se actualizará la próxima vez que se cargue.');
-                
-                loadProducts();
-                closeModal();
             });
 
             productListContainer.addEventListener('click', function(event) {
