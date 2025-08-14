@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tu Emprendimiento - Catálogo de Productos</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Playfair Display & Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    
+    <!-- Configuración de la paleta de colores y fuentes de Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-primary': '#A98870',      // Marrón más oscuro
+                        'brand-secondary': '#C3A995',  // Beige medio
+                        'brand-accent': '#D6C1B5',      // Beige rosado claro
+                        'brand-light': '#FBF9F6',       // Crema muy claro (más blanco)
+                        'brand-dark': '#4a3f35',        // Un marrón oscuro para texto
+                    },
+                    fontFamily: {
+                        'sans': ['Montserrat', 'sans-serif'],
+                        'serif': ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Estilos personalizados -->
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+        .product-card:hover .product-details-link {
+            text-decoration: underline;
+        }
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-container {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            border-top-color: #A98870;
+            animation: spin 1s linear infinite;
+        }
+        #hero-slider .slide {
+            transition: opacity 1.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-brand-light text-brand-dark">
+
+    <!-- =========== HEADER =========== -->
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-40">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="font-serif text-2xl font-bold text-brand-dark">TuLogo</h1>
+            <a href="#catalogo" class="bg-brand-primary text-white font-semibold text-sm py-2 px-5 rounded-full hover:bg-brand-secondary transition-colors duration-300">
+                Ver Productos
+            </a>
+        </div>
+    </header>
+
+    <!-- =========== HERO SECTION CON SLIDER =========== -->
+    <main class="relative h-[70vh] min-h-[450px] max-h-[650px] text-white flex items-center justify-center text-center overflow-hidden">
+        <div id="hero-slider" class="absolute top-0 left-0 w-full h-full"></div>
+        <div class="absolute top-0 left-0 w-full h-full bg-black/40 z-10"></div>
+        
+        <div class="relative z-20 px-6">
+            <h2 class="font-serif text-5xl md:text-7xl font-bold leading-tight">
+                Productos Únicos
+            </h2>
+            <p class="mt-4 text-base md:text-lg text-gray-200 max-w-lg mx-auto">
+                Descubre nuestra colección curada, diseñada para inspirar y elevar tu día a día.
+            </p>
+            <div class="mt-8 flex justify-center items-center gap-4">
+                <a href="#catalogo" class="bg-white text-brand-dark font-semibold py-3 px-8 rounded-full hover:bg-brand-light transition-colors duration-300 text-base">
+                    Explorar Catálogo
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- =========== CATÁLOGO DE PRODUCTOS =========== -->
+    <section id="catalogo" class="py-24 bg-white">
+        <div class="container mx-auto px-6">
+            <h3 class="font-serif text-4xl font-bold text-center mb-16 text-brand-dark">Nuestro Catálogo</h3>
+            <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+                <!-- Los productos se insertan aquí desde localStorage o products.json -->
+            </div>
+        </div>
+    </section>
+
+    <!-- =========== MODAL DE DETALLE DE PRODUCTO =========== -->
+    <div id="product-detail-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden opacity-0">
+        <div class="modal-container bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transform scale-95 opacity-0">
+            <div class="p-4 border-b border-brand-light flex justify-between items-center">
+                <h3 id="product-detail-title" class="font-serif text-2xl font-bold text-brand-dark">Detalle del Producto</h3>
+                <button id="close-product-detail-btn" class="text-gray-400 hover:text-brand-dark transition-colors">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="flex-grow overflow-y-auto p-6 md:p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <img id="main-product-image" src="" alt="Imagen principal del producto" class="w-full h-auto max-h-96 object-contain rounded-lg mb-4">
+                        <div id="thumbnail-container" class="grid grid-cols-4 gap-2"></div>
+                    </div>
+                    <div>
+                        <h4 id="product-detail-name" class="font-serif text-4xl font-bold text-brand-dark"></h4>
+                        <p id="product-detail-price" class="text-3xl font-semibold text-brand-primary my-4"></p>
+                        <p id="product-detail-description" class="text-brand-dark/80 leading-relaxed"></p>
+                        <a id="product-detail-whatsapp-btn" href="#" target="_blank" class="mt-8 w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-full flex items-center justify-center hover:bg-brand-secondary transition-transform hover:scale-105 duration-300 text-lg">
+                            Pedir por WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========== FOOTER =========== -->
+    <footer class="bg-brand-light">
+        <div class="container mx-auto px-6 py-12 text-center text-brand-secondary">
+            <p class="font-serif text-xl text-brand-dark mb-2">TuLogo</p>
+            <p class="text-sm">&copy; 2024 Tu Emprendimiento. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        
+        // --- CONFIGURACIÓN GLOBAL ---
+        const whatsappNumber = '5491112345678';
+        const heroImages = [
+            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1999&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop',
+        ];
+        
+        // --- CARGA DE DATOS ---
+        let products = [];
+        try {
+            // Prioriza los datos guardados por el admin en localStorage
+            const storedProducts = localStorage.getItem('products');
+            if (storedProducts) {
+                products = JSON.parse(storedProducts);
+            } else {
+                // Si no hay nada, carga desde el archivo JSON inicial
+                const response = await fetch('products.json');
+                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                products = await response.json();
+            }
+        } catch (error) {
+            console.error("No se pudo cargar el archivo de productos:", error);
+            const productGrid = document.getElementById('product-grid');
+            if(productGrid) productGrid.innerHTML = '<p class="col-span-full text-center text-red-500">Error al cargar los productos.</p>';
+            return;
+        }
+
+        // --- INICIALIZACIÓN DE FUNCIONES ---
+        initHeroSlider();
+        renderProducts();
+        initProductDetailModal();
+
+        // --- FUNCIONES DE LA APLICACIÓN ---
+        function initHeroSlider() {
+            const sliderContainer = document.getElementById('hero-slider');
+            if (!sliderContainer) return;
+            heroImages.forEach((src, index) => {
+                const slide = document.createElement('div');
+                slide.className = 'slide absolute top-0 left-0 w-full h-full bg-cover bg-center';
+                slide.style.backgroundImage = `url('${src}')`;
+                slide.style.opacity = index === 0 ? '1' : '0';
+                sliderContainer.appendChild(slide);
+            });
+            let currentSlide = 0;
+            const slides = sliderContainer.querySelectorAll('.slide');
+            setInterval(() => {
+                slides[currentSlide].style.opacity = '0';
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].style.opacity = '1';
+            }, 5000);
+        }
+
+        function renderProducts() {
+            const productGrid = document.getElementById('product-grid');
+            if (!productGrid) return;
+            productGrid.innerHTML = ''; 
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card group relative flex flex-col cursor-pointer';
+                productCard.dataset.productId = product.id;
+                
+                productCard.innerHTML = `
+                    <div class="relative overflow-hidden rounded-lg">
+                        <img src="${product.image}" alt="${product.name}" class="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105">
+                    </div>
+                    <div class="pt-4 flex flex-col">
+                        <h4 class="text-base font-semibold text-brand-dark">${product.name}</h4>
+                        <p class="text-sm text-brand-secondary mt-1">${product.price}</p>
+                        <a class="product-details-link text-sm font-semibold text-brand-primary mt-2 self-start">Ver detalles</a>
+                    </div>`;
+                productGrid.appendChild(productCard);
+            });
+        }
+
+        function initProductDetailModal() {
+            const modal = document.getElementById('product-detail-modal');
+            const modalContainer = modal.querySelector('.modal-container');
+            const closeBtn = document.getElementById('close-product-detail-btn');
+            const productGrid = document.getElementById('product-grid');
+            const mainImage = document.getElementById('main-product-image');
+            const thumbnailContainer = document.getElementById('thumbnail-container');
+            const productName = document.getElementById('product-detail-name');
+            const productPrice = document.getElementById('product-detail-price');
+            const productDescription = document.getElementById('product-detail-description');
+            const whatsappBtn = document.getElementById('product-detail-whatsapp-btn');
+
+            function openModal(productId) {
+                const product = products.find(p => p.id == productId);
+                if (!product) return;
+                productName.textContent = product.name;
+                productPrice.textContent = product.price;
+                productDescription.textContent = product.description;
+                mainImage.src = product.images[0];
+                mainImage.alt = product.name;
+                thumbnailContainer.innerHTML = '';
+                product.images.forEach(imgSrc => {
+                    const thumb = document.createElement('img');
+                    thumb.src = imgSrc;
+                    thumb.alt = `Miniatura de ${product.name}`;
+                    thumb.className = 'w-full h-20 object-cover rounded-md cursor-pointer border-2 border-transparent hover:border-brand-primary';
+                    if (imgSrc === product.images[0]) {
+                        thumb.classList.add('border-brand-primary');
+                    }
+                    thumb.addEventListener('click', () => {
+                        mainImage.src = imgSrc;
+                        thumbnailContainer.querySelectorAll('img').forEach(i => i.classList.remove('border-brand-primary'));
+                        thumb.classList.add('border-brand-primary');
+                    });
+                    thumbnailContainer.appendChild(thumb);
+                });
+                const message = encodeURIComponent(`¡Hola! Estoy interesado/a en el producto: ${product.name}`);
+                whatsappBtn.href = `https://wa.me/${whatsappNumber}?text=${message}`;
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modalContainer.classList.remove('scale-95', 'opacity-0');
+                }, 10);
+            }
+
+            function closeModal() {
+                modalContainer.classList.add('scale-95', 'opacity-0');
+                modal.classList.add('opacity-0');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+
+            productGrid.addEventListener('click', (e) => {
+                const card = e.target.closest('.product-card');
+                if (card) {
+                    openModal(card.dataset.productId);
+                }
+            });
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+        }
+    });
+    </script>
+</body>
+</html>

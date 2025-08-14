@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-primary': '#A98870',
+                        'brand-secondary': '#C3A995',
+                        'brand-accent': '#D6C1B5',
+                        'brand-light': '#FBF9F6',
+                        'brand-dark': '#4a3f35',
+                    },
+                    fontFamily: {
+                        'sans': ['Montserrat', 'sans-serif'],
+                        'serif': ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-light">
+
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="font-serif text-2xl font-bold text-brand-dark">Panel de Control</h1>
+            <button id="logout-btn" class="text-sm font-semibold text-brand-primary hover:underline">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold font-serif text-brand-dark">Mis Productos</h2>
+            <button id="add-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary transition-colors">
+                + Agregar Producto
+            </button>
+        </div>
+
+        <!-- Lista de Productos -->
+        <div id="product-list" class="bg-white p-6 rounded-xl shadow-lg">
+            <!-- Los productos se cargarán aquí -->
+        </div>
+    </main>
+
+    <!-- Modal para Agregar/Editar Producto -->
+    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b border-brand-light">
+                <h3 id="modal-title" class="font-serif text-2xl font-bold text-brand-dark">Agregar Nuevo Producto</h3>
+            </div>
+            <form id="product-form" class="flex-grow overflow-y-auto p-6 space-y-4">
+                <input type="hidden" id="product-id">
+                <div>
+                    <label for="product-name" class="block text-sm font-semibold text-brand-dark mb-1">Nombre</label>
+                    <input type="text" id="product-name" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required>
+                </div>
+                <div>
+                    <label for="product-price" class="block text-sm font-semibold text-brand-dark mb-1">Precio</label>
+                    <input type="text" id="product-price" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required>
+                </div>
+                <div>
+                    <label for="product-description" class="block text-sm font-semibold text-brand-dark mb-1">Descripción</label>
+                    <textarea id="product-description" rows="4" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-brand-dark mb-1">Imágenes (URLs)</label>
+                    <div id="image-inputs" class="space-y-2">
+                        <input type="url" placeholder="URL de la imagen principal" class="product-image-url w-full px-4 py-2 border border-brand-accent rounded-lg" required>
+                    </div>
+                    <button type="button" id="add-image-field" class="text-sm text-brand-primary font-semibold mt-2">+ Agregar otra imagen</button>
+                </div>
+            </form>
+            <div class="p-6 bg-gray-50 rounded-b-xl flex justify-end gap-4">
+                <button type="button" id="cancel-btn" class="text-sm font-semibold text-gray-600 py-2 px-5 rounded-full hover:bg-gray-200">Cancelar</button>
+                <button type="submit" form="product-form" id="save-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary">Guardar Producto</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Autenticación ---
+            if (sessionStorage.getItem('isAdminAuthenticated') !== 'true') {
+                window.location.href = 'admin.html';
+                return;
+            }
+
+            // --- Elementos del DOM ---
+            const productListContainer = document.getElementById('product-list');
+            const addProductBtn = document.getElementById('add-product-btn');
+            const modal = document.getElementById('product-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const productForm = document.getElementById('product-form');
+            const imageInputsContainer = document.getElementById('image-inputs');
+            const addImageFieldBtn = document.getElementById('add-image-field');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            let products = [];
+
+            // --- Carga y Renderizado de Productos ---
+            async function loadProducts() {
+                try {
+                    // En un escenario real, aquí harías un fetch a tu API de backend.
+                    // Para este ejemplo, usamos localStorage como una base de datos simulada.
+                    const storedProducts = localStorage.getItem('products');
+                    if (storedProducts) {
+                        products = JSON.parse(storedProducts);
+                    } else {
+                        // Si no hay nada en localStorage, carga desde el JSON inicial
+                        const response = await fetch('products.json');
+                        products = await response.json();
+                        localStorage.setItem('products', JSON.stringify(products));
+                    }
+                    renderProducts();
+                } catch (error) {
+                    console.error("Error al cargar productos:", error);
+                    productListContainer.innerHTML = '<p>No se pudieron cargar los productos.</p>';
+                }
+            }
+
+            function renderProducts() {
+                productListContainer.innerHTML = '';
+                if (products.length === 0) {
+                    productListContainer.innerHTML = '<p class="text-center text-gray-500">No hay productos para mostrar. ¡Agrega el primero!</p>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.className = 'w-full text-left';
+                table.innerHTML = `
+                    <thead>
+                        <tr class="border-b border-brand-light">
+                            <th class="p-4 font-semibold">Producto</th>
+                            <th class="p-4 font-semibold">Precio</th>
+                            <th class="p-4 font-semibold">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+                products.forEach(product => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-brand-light/50';
+                    row.innerHTML = `
+                        <td class="p-4 flex items-center gap-4">
+                            <img src="${product.image}" alt="${product.name}" class="w-12 h-12 object-cover rounded-md">
+                            <span class="font-semibold">${product.name}</span>
+                        </td>
+                        <td class="p-4">${product.price}</td>
+                        <td class="p-4">
+                            <button data-id="${product.id}" class="edit-btn text-sm font-semibold text-brand-primary hover:underline mr-4">Editar</button>
+                            <button data-id="${product.id}" class="delete-btn text-sm font-semibold text-red-500 hover:underline">Eliminar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                productListContainer.appendChild(table);
+            }
+
+            // --- Lógica del Modal ---
+            function openModal(product = null) {
+                productForm.reset();
+                imageInputsContainer.innerHTML = '<input type="url" placeholder="URL de la imagen principal" class="product-image-url w-full px-4 py-2 border border-brand-accent rounded-lg" required>';
+                
+                if (product) {
+                    modalTitle.textContent = 'Editar Producto';
+                    document.getElementById('product-id').value = product.id;
+                    document.getElementById('product-name').value = product.name;
+                    document.getElementById('product-price').value = product.price;
+                    document.getElementById('product-description').value = product.description;
+                    
+                    product.images.forEach((url, index) => {
+                        if (index === 0) {
+                            imageInputsContainer.querySelector('input').value = url;
+                        } else {
+                            addImageField(url);
+                        }
+                    });
+                } else {
+                    modalTitle.textContent = 'Agregar Nuevo Producto';
+                    document.getElementById('product-id').value = '';
+                }
+                modal.classList.remove('hidden');
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+            }
+
+            function addImageField(value = '') {
+                const input = document.createElement('input');
+                input.type = 'url';
+                input.placeholder = 'URL de imagen adicional';
+                input.className = 'product-image-url w-full px-4 py-2 border border-brand-accent rounded-lg';
+                input.value = value;
+                imageInputsContainer.appendChild(input);
+            }
+
+            // --- Manejo de Eventos ---
+            addProductBtn.addEventListener('click', () => openModal());
+            cancelBtn.addEventListener('click', closeModal);
+            addImageFieldBtn.addEventListener('click', () => addImageField());
+            logoutBtn.addEventListener('click', () => {
+                sessionStorage.removeItem('isAdminAuthenticated');
+                window.location.href = 'admin.html';
+            });
+
+            productForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const id = document.getElementById('product-id').value;
+                const imageUrls = Array.from(document.querySelectorAll('.product-image-url')).map(input => input.value).filter(url => url);
+
+                const productData = {
+                    id: id ? parseInt(id) : Date.now(), // Nuevo ID si es un producto nuevo
+                    name: document.getElementById('product-name').value,
+                    price: document.getElementById('product-price').value,
+                    description: document.getElementById('product-description').value,
+                    image: imageUrls[0] || '',
+                    images: imageUrls
+                };
+
+                if (id) {
+                    // Editar
+                    const index = products.findIndex(p => p.id == id);
+                    products[index] = productData;
+                } else {
+                    // Agregar
+                    products.push(productData);
+                }
+                
+                // Simula el guardado en el backend
+                localStorage.setItem('products', JSON.stringify(products));
+                alert('¡Producto guardado! La tienda se actualizará la próxima vez que se cargue.');
+                
+                loadProducts();
+                closeModal();
+            });
+
+            productListContainer.addEventListener('click', function(event) {
+                const target = event.target;
+                const id = target.dataset.id;
+
+                if (target.classList.contains('edit-btn')) {
+                    const product = products.find(p => p.id == id);
+                    openModal(product);
+                }
+
+                if (target.classList.contains('delete-btn')) {
+                    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+                        products = products.filter(p => p.id != id);
+                        localStorage.setItem('products', JSON.stringify(products));
+                        alert('¡Producto eliminado!');
+                        loadProducts();
+                    }
+                }
+            });
+
+            // Carga inicial
+            loadProducts();
+        });
+    </script>
+</body>
+</html>

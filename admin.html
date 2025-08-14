@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Tu Emprendimiento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-primary': '#A98870',
+                        'brand-secondary': '#C3A995',
+                        'brand-accent': '#D6C1B5',
+                        'brand-light': '#FBF9F6',
+                        'brand-dark': '#4a3f35',
+                    },
+                    fontFamily: {
+                        'sans': ['Montserrat', 'sans-serif'],
+                        'serif': ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-light flex items-center justify-center h-screen">
+    <div class="w-full max-w-sm mx-auto p-8 bg-white rounded-xl shadow-lg">
+        <h1 class="font-serif text-3xl font-bold text-center text-brand-dark mb-2">Acceso Admin</h1>
+        <p class="text-center text-brand-secondary mb-8">Ingresa para gestionar tus productos.</p>
+        <form id="login-form">
+            <div class="mb-4">
+                <label for="password" class="block text-sm font-semibold text-brand-dark mb-2">Contraseña</label>
+                <input type="password" id="password" class="w-full px-4 py-2 border border-brand-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary" required>
+            </div>
+            <button type="submit" class="w-full bg-brand-primary text-white font-semibold py-3 rounded-lg hover:bg-brand-secondary transition-colors duration-300">
+                Ingresar
+            </button>
+            <p id="error-message" class="text-red-500 text-sm text-center mt-4"></p>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+            
+            // Contraseña simple para el ejemplo. En un proyecto real, esto debe ser manejado por un backend seguro.
+            if (password === 'admin') {
+                // Guardar un token de sesión simulado
+                sessionStorage.setItem('isAdminAuthenticated', 'true');
+                window.location.href = 'panel.html';
+            } else {
+                errorMessage.textContent = 'Contraseña incorrecta.';
+            }
+        });
+    </script>
+</body>
+</html>
