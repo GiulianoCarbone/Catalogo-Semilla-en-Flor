@@ -48,13 +48,6 @@
         .modal-container {
             transition: transform 0.3s ease, opacity 0.3s ease;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .spinner {
-            border-top-color: #A98870;
-            animation: spin 1s linear infinite;
-        }
         #hero-slider .slide {
             transition: opacity 1.5s ease-in-out;
         }
@@ -95,9 +88,18 @@
     <!-- =========== CATÁLOGO DE PRODUCTOS =========== -->
     <section id="catalogo" class="py-24 bg-white">
         <div class="container mx-auto px-6">
-            <h3 class="font-serif text-4xl font-bold text-center mb-16 text-brand-dark">Nuestro Catálogo</h3>
+            <h3 class="font-serif text-4xl font-bold text-center mb-6 text-brand-dark">Nuestro Catálogo</h3>
+            
+            <!-- Barra de Búsqueda -->
+            <div class="w-full max-w-lg mx-auto mb-12">
+                <div class="relative">
+                    <input type="search" id="search-bar" placeholder="Buscar relojes, accesorios, etc." class="w-full pl-10 pr-4 py-3 border border-brand-accent rounded-full focus:ring-2 focus:ring-brand-primary focus:outline-none">
+                    <svg class="w-5 h-5 text-brand-secondary absolute top-1/2 left-4 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+                </div>
+            </div>
+
             <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-                <!-- Los productos se insertan aquí desde localStorage o products.json -->
+                <!-- Los productos se insertan aquí -->
             </div>
         </div>
     </section>
@@ -138,147 +140,158 @@
         </div>
     </footer>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        
-        // --- CONFIGURACIÓN GLOBAL ---
-        const whatsappNumber = '5491112345678';
-        const heroImages = [
-            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1999&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop',
-        ];
-        
-        // --- CARGA DE DATOS ---
-        let products = [];
-        try {
-            // Prioriza los datos guardados por el admin en localStorage
-            const storedProducts = localStorage.getItem('products');
-            if (storedProducts) {
-                products = JSON.parse(storedProducts);
-            } else {
-                // Si no hay nada, carga desde el archivo JSON inicial
-                const response = await fetch('products.json');
-                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                products = await response.json();
-            }
-        } catch (error) {
-            console.error("No se pudo cargar el archivo de productos:", error);
+    <!-- Firebase -->
+    <script type="module">
+        // Importar funciones de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuración de Firebase (inyectada por el entorno)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const whatsappNumber = '5491112345678';
+            const heroImages = [
+                'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1999&auto=format&fit=crop',
+                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop',
+                'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop',
+            ];
+            
+            let allProducts = [];
             const productGrid = document.getElementById('product-grid');
-            if(productGrid) productGrid.innerHTML = '<p class="col-span-full text-center text-red-500">Error al cargar los productos.</p>';
-            return;
-        }
 
-        // --- INICIALIZACIÓN DE FUNCIONES ---
-        initHeroSlider();
-        renderProducts();
-        initProductDetailModal();
-
-        // --- FUNCIONES DE LA APLICACIÓN ---
-        function initHeroSlider() {
-            const sliderContainer = document.getElementById('hero-slider');
-            if (!sliderContainer) return;
-            heroImages.forEach((src, index) => {
-                const slide = document.createElement('div');
-                slide.className = 'slide absolute top-0 left-0 w-full h-full bg-cover bg-center';
-                slide.style.backgroundImage = `url('${src}')`;
-                slide.style.opacity = index === 0 ? '1' : '0';
-                sliderContainer.appendChild(slide);
+            // Escuchar cambios en la base de datos en tiempo real
+            const productsCollection = collection(db, `/artifacts/${appId}/public/data/products`);
+            onSnapshot(productsCollection, (snapshot) => {
+                allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProducts(allProducts);
+            }, (error) => {
+                console.error("Error al obtener productos:", error);
+                if(productGrid) productGrid.innerHTML = '<p class="col-span-full text-center text-red-500">Error al cargar los productos.</p>';
             });
-            let currentSlide = 0;
-            const slides = sliderContainer.querySelectorAll('.slide');
-            setInterval(() => {
-                slides[currentSlide].style.opacity = '0';
-                currentSlide = (currentSlide + 1) % slides.length;
-                slides[currentSlide].style.opacity = '1';
-            }, 5000);
-        }
 
-        function renderProducts() {
-            const productGrid = document.getElementById('product-grid');
-            if (!productGrid) return;
-            productGrid.innerHTML = ''; 
-            products.forEach(product => {
-                const productCard = document.createElement('div');
-                productCard.className = 'product-card group relative flex flex-col cursor-pointer';
-                productCard.dataset.productId = product.id;
-                
-                productCard.innerHTML = `
-                    <div class="relative overflow-hidden rounded-lg">
-                        <img src="${product.image}" alt="${product.name}" class="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105">
-                    </div>
-                    <div class="pt-4 flex flex-col">
-                        <h4 class="text-base font-semibold text-brand-dark">${product.name}</h4>
-                        <p class="text-sm text-brand-secondary mt-1">${product.price}</p>
-                        <a class="product-details-link text-sm font-semibold text-brand-primary mt-2 self-start">Ver detalles</a>
-                    </div>`;
-                productGrid.appendChild(productCard);
-            });
-        }
-
-        function initProductDetailModal() {
-            const modal = document.getElementById('product-detail-modal');
-            const modalContainer = modal.querySelector('.modal-container');
-            const closeBtn = document.getElementById('close-product-detail-btn');
-            const productGrid = document.getElementById('product-grid');
-            const mainImage = document.getElementById('main-product-image');
-            const thumbnailContainer = document.getElementById('thumbnail-container');
-            const productName = document.getElementById('product-detail-name');
-            const productPrice = document.getElementById('product-detail-price');
-            const productDescription = document.getElementById('product-detail-description');
-            const whatsappBtn = document.getElementById('product-detail-whatsapp-btn');
-
-            function openModal(productId) {
-                const product = products.find(p => p.id == productId);
-                if (!product) return;
-                productName.textContent = product.name;
-                productPrice.textContent = product.price;
-                productDescription.textContent = product.description;
-                mainImage.src = product.images[0];
-                mainImage.alt = product.name;
-                thumbnailContainer.innerHTML = '';
-                product.images.forEach(imgSrc => {
-                    const thumb = document.createElement('img');
-                    thumb.src = imgSrc;
-                    thumb.alt = `Miniatura de ${product.name}`;
-                    thumb.className = 'w-full h-20 object-cover rounded-md cursor-pointer border-2 border-transparent hover:border-brand-primary';
-                    if (imgSrc === product.images[0]) {
-                        thumb.classList.add('border-brand-primary');
-                    }
-                    thumb.addEventListener('click', () => {
-                        mainImage.src = imgSrc;
-                        thumbnailContainer.querySelectorAll('img').forEach(i => i.classList.remove('border-brand-primary'));
-                        thumb.classList.add('border-brand-primary');
-                    });
-                    thumbnailContainer.appendChild(thumb);
+            initHeroSlider();
+            initSearch();
+            initProductDetailModal();
+            
+            function initHeroSlider() {
+                const sliderContainer = document.getElementById('hero-slider');
+                if (!sliderContainer) return;
+                heroImages.forEach((src, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'slide absolute top-0 left-0 w-full h-full bg-cover bg-center';
+                    slide.style.backgroundImage = `url('${src}')`;
+                    slide.style.opacity = index === 0 ? '1' : '0';
+                    sliderContainer.appendChild(slide);
                 });
-                const message = encodeURIComponent(`¡Hola! Estoy interesado/a en el producto: ${product.name}`);
-                whatsappBtn.href = `https://wa.me/${whatsappNumber}?text=${message}`;
-                modal.classList.remove('hidden');
-                setTimeout(() => {
-                    modal.classList.remove('opacity-0');
-                    modalContainer.classList.remove('scale-95', 'opacity-0');
-                }, 10);
+                let currentSlide = 0;
+                const slides = sliderContainer.querySelectorAll('.slide');
+                setInterval(() => {
+                    slides[currentSlide].style.opacity = '0';
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    slides[currentSlide].style.opacity = '1';
+                }, 5000);
             }
 
-            function closeModal() {
-                modalContainer.classList.add('scale-95', 'opacity-0');
-                modal.classList.add('opacity-0');
-                setTimeout(() => modal.classList.add('hidden'), 300);
-            }
-
-            productGrid.addEventListener('click', (e) => {
-                const card = e.target.closest('.product-card');
-                if (card) {
-                    openModal(card.dataset.productId);
+            function renderProducts(productsToRender) {
+                if (!productGrid) return;
+                productGrid.innerHTML = ''; 
+                if (productsToRender.length === 0) {
+                    productGrid.innerHTML = '<p class="col-span-full text-center text-brand-secondary">No se encontraron productos.</p>';
+                    return;
                 }
-            });
-            closeBtn.addEventListener('click', closeModal);
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) closeModal();
-            });
-        }
-    });
+                productsToRender.forEach(product => {
+                    const productCard = document.createElement('div');
+                    productCard.className = 'product-card group relative flex flex-col cursor-pointer';
+                    productCard.dataset.productId = product.id;
+                    
+                    productCard.innerHTML = `
+                        <div class="relative overflow-hidden rounded-lg">
+                            <img src="${product.image}" alt="${product.name}" class="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105">
+                        </div>
+                        <div class="pt-4 flex flex-col">
+                            <h4 class="text-base font-semibold text-brand-dark">${product.name}</h4>
+                            <p class="text-sm text-brand-secondary mt-1">${product.price}</p>
+                            <a class="product-details-link text-sm font-semibold text-brand-primary mt-2 self-start">Ver detalles</a>
+                        </div>`;
+                    productGrid.appendChild(productCard);
+                });
+            }
+
+            function initSearch() {
+                const searchBar = document.getElementById('search-bar');
+                if (!searchBar) return;
+                searchBar.addEventListener('input', () => {
+                    const searchTerm = searchBar.value.toLowerCase();
+                    const filtered = allProducts.filter(p => 
+                        p.name.toLowerCase().includes(searchTerm) || 
+                        p.description.toLowerCase().includes(searchTerm)
+                    );
+                    renderProducts(filtered);
+                });
+            }
+
+            function initProductDetailModal() {
+                const modal = document.getElementById('product-detail-modal');
+                const closeBtn = document.getElementById('close-product-detail-btn');
+                const mainImage = document.getElementById('main-product-image');
+                const thumbnailContainer = document.getElementById('thumbnail-container');
+                const productName = document.getElementById('product-detail-name');
+                const productPrice = document.getElementById('product-detail-price');
+                const productDescription = document.getElementById('product-detail-description');
+                const whatsappBtn = document.getElementById('product-detail-whatsapp-btn');
+
+                window.openModal = function(productId) {
+                    const product = allProducts.find(p => p.id == productId);
+                    if (!product) return;
+                    
+                    productName.textContent = product.name;
+                    productPrice.textContent = product.price;
+                    productDescription.textContent = product.description;
+                    mainImage.src = product.images[0];
+                    mainImage.alt = product.name;
+                    
+                    thumbnailContainer.innerHTML = '';
+                    product.images.forEach(imgSrc => {
+                        const thumb = document.createElement('img');
+                        thumb.src = imgSrc;
+                        thumb.className = 'w-full h-20 object-cover rounded-md cursor-pointer border-2 hover:border-brand-primary';
+                        thumb.classList.toggle('border-brand-primary', imgSrc === product.images[0]);
+                        thumb.addEventListener('click', () => {
+                            mainImage.src = imgSrc;
+                            thumbnailContainer.querySelectorAll('img').forEach(i => i.classList.remove('border-brand-primary'));
+                            thumb.classList.add('border-brand-primary');
+                        });
+                        thumbnailContainer.appendChild(thumb);
+                    });
+
+                    const message = encodeURIComponent(`¡Hola! Estoy interesado/a en el producto: ${product.name}`);
+                    whatsappBtn.href = `https://wa.me/${whatsappNumber}?text=${message}`;
+
+                    modal.classList.remove('hidden');
+                    setTimeout(() => modal.querySelector('.modal-container').classList.remove('scale-95', 'opacity-0'), 10);
+                }
+
+                function closeModal() {
+                    modal.querySelector('.modal-container').classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => modal.classList.add('hidden'), 300);
+                }
+
+                productGrid.addEventListener('click', (e) => {
+                    const card = e.target.closest('.product-card');
+                    if (card) openModal(card.dataset.productId);
+                });
+                closeBtn.addEventListener('click', closeModal);
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeModal();
+                });
+            }
+        });
     </script>
 </body>
 </html>
