@@ -106,6 +106,7 @@
             const logoutBtn = document.getElementById('logout-btn');
 
             let products = [];
+            let loadFailed = false;
 
             // --- Carga y Renderizado de Productos ---
             async function loadProducts() {
@@ -116,9 +117,16 @@
                     if (storedProducts) {
                         products = JSON.parse(storedProducts);
                     } else {
-                        // Si no hay nada en localStorage, carga desde el JSON inicial
-                        const response = await fetch('products.json');
-                        products = await response.json();
+                        // Si no hay nada en localStorage, intenta cargar desde el JSON inicial
+                        try {
+                            const response = await fetch('products.json');
+                            if (!response.ok) throw new Error('Error HTTP ' + response.status);
+                            products = await response.json();
+                        } catch (error) {
+                            console.warn('No se pudo cargar products.json, iniciando con lista vacía.', error);
+                            products = [];
+                            loadFailed = true;
+                        }
                         localStorage.setItem('products', JSON.stringify(products));
                     }
                     renderProducts();
@@ -131,7 +139,10 @@
             function renderProducts() {
                 productListContainer.innerHTML = '';
                 if (products.length === 0) {
-                    productListContainer.innerHTML = '<p class="text-center text-gray-500">No hay productos para mostrar. ¡Agrega el primero!</p>';
+                    const message = loadFailed
+                        ? 'No se pudieron cargar los productos iniciales. Comienza agregando uno nuevo.'
+                        : 'No hay productos para mostrar. ¡Agrega el primero!';
+                    productListContainer.innerHTML = `<p class="text-center text-gray-500">${message}</p>`;
                     return;
                 }
 
