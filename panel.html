@@ -116,7 +116,7 @@
                     if (storedProducts) {
                         products = JSON.parse(storedProducts);
                     } else {
-                        // Si no hay nada en localStorage, carga desde el JSON inicial
+                        // Si no hay productos almacenados, intenta cargar un archivo JSON opcional con datos iniciales
                         const response = await fetch('products.json');
                         products = await response.json();
                         localStorage.setItem('products', JSON.stringify(products));
