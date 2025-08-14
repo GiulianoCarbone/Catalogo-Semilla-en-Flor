@@ -206,14 +206,13 @@
                     return;
                 }
                 productsToRender.forEach(product => {
-                    const imgSrc = product.images && product.images.length ? product.images[0] : 'https://via.placeholder.com/300x300?text=Sin+Imagen';
+                    // Usar la primera imagen del array o imagen individual, y fallback si no hay imagen
+                    const imgSrc = Array.isArray(product.images) && product.images.length
+                        ? product.images[0]
+                        : (product.image || 'https://via.placeholder.com/300x300?text=Sin+Imagen');
                     const productCard = document.createElement('div');
                     productCard.className = 'product-card group relative flex flex-col cursor-pointer';
                     productCard.dataset.productId = product.id;
-                    
-                    const imageSrc = Array.isArray(product.images) && product.images.length
-                        ? product.images[0]
-                        : product.image;
 
                     productCard.innerHTML = `
                         <div class="relative overflow-hidden rounded-lg">
@@ -255,22 +254,25 @@
                 window.openModal = function(productId) {
                     const product = allProducts.find(p => p.id == productId);
                     if (!product) return;
-                    
-                    productName.textContent = product.name;
-                    productPrice.textContent = product.price;
-                    productDescription.textContent = product.description;
-                    mainImage.src = product.images && product.images.length ? product.images[0] : 'https://via.placeholder.com/300x300?text=Sin+Imagen';
-                    mainImage.alt = product.name;
+
+                    productName.textContent = product.name || '';
+                    productPrice.textContent = product.price || '';
+                    productDescription.textContent = product.description || '';
+                    const mainImgSrc = Array.isArray(product.images) && product.images.length
+                        ? product.images[0]
+                        : (product.image || 'https://via.placeholder.com/300x300?text=Sin+Imagen');
+                    mainImage.src = mainImgSrc;
+                    mainImage.alt = product.name || '';
                     mainImage.onerror = function() {
                         this.src = 'https://via.placeholder.com/300x300?text=Sin+Imagen';
                     };
                     thumbnailContainer.innerHTML = '';
-                    if (product.images && product.images.length) {
+                    if (Array.isArray(product.images) && product.images.length) {
                         product.images.forEach(imgSrc => {
                             const thumb = document.createElement('img');
                             thumb.src = imgSrc;
                             thumb.className = 'w-full h-20 object-cover rounded-md cursor-pointer border-2 hover:border-brand-primary';
-                            thumb.classList.toggle('border-brand-primary', imgSrc === product.images[0]);
+                            thumb.classList.toggle('border-brand-primary', imgSrc === mainImgSrc);
                             thumb.onerror = function() {
                                 this.src = 'https://via.placeholder.com/80x80?text=Sin+Imagen';
                             };
