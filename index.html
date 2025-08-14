@@ -147,9 +147,14 @@
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Configuración de Firebase (inyectada por el entorno)
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
+        const firebaseConfig = {
+    apiKey: "AIzaSyCyboSrsngedPn1EUavciJh8bV6PW3L9TY",
+    authDomain: "catalogo-17d5b.firebaseapp.com",
+    projectId: "catalogo-17d5b",
+    storageBucket: "catalogo-17d5b.firebasestorage.app",
+    messagingSenderId: "798293393240",
+    appId: "1:798293393240:web:a640b2e42e2e184aad2f2d"
+  };
         // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
