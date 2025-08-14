@@ -124,9 +124,12 @@
                     renderProducts();
                 } catch (error) {
                     console.error("Error al cargar productos:", error);
-                    productListContainer.innerHTML = '<p>No se pudieron cargar los productos.</p>';
+                    products = [];
+                    renderProducts();
                 }
             }
+
+            window.loadProducts = loadProducts;
 
             function renderProducts() {
                 productListContainer.innerHTML = '';
