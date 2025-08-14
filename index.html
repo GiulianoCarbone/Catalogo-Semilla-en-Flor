@@ -5,15 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tu Emprendimiento - Catálogo de Productos</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts: Playfair Display & Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
     
-    <!-- Configuración de la paleta de colores y fuentes de Tailwind -->
     <script>
         tailwind.config = {
             theme: {
@@ -34,7 +31,6 @@
         }
     </script>
     
-    <!-- Estilos personalizados -->
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
@@ -55,7 +51,6 @@
 </head>
 <body class="bg-brand-light text-brand-dark">
 
-    <!-- =========== HEADER =========== -->
     <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-40">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <h1 class="font-serif text-2xl font-bold text-brand-dark">TuLogo</h1>
@@ -65,7 +60,6 @@
         </div>
     </header>
 
-    <!-- =========== HERO SECTION CON SLIDER =========== -->
     <main class="relative h-[70vh] min-h-[450px] max-h-[650px] text-white flex items-center justify-center text-center overflow-hidden">
         <div id="hero-slider" class="absolute top-0 left-0 w-full h-full"></div>
         <div class="absolute top-0 left-0 w-full h-full bg-black/40 z-10"></div>
@@ -85,12 +79,10 @@
         </div>
     </main>
 
-    <!-- =========== CATÁLOGO DE PRODUCTOS =========== -->
     <section id="catalogo" class="py-24 bg-white">
         <div class="container mx-auto px-6">
             <h3 class="font-serif text-4xl font-bold text-center mb-6 text-brand-dark">Nuestro Catálogo</h3>
             
-            <!-- Barra de Búsqueda -->
             <div class="w-full max-w-lg mx-auto mb-12">
                 <div class="relative">
                     <input type="search" id="search-bar" placeholder="Buscar relojes, accesorios, etc." class="w-full pl-10 pr-4 py-3 border border-brand-accent rounded-full focus:ring-2 focus:ring-brand-primary focus:outline-none">
@@ -99,12 +91,10 @@
             </div>
 
             <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-                <!-- Los productos se insertan aquí -->
-            </div>
+                </div>
         </div>
     </section>
 
-    <!-- =========== MODAL DE DETALLE DE PRODUCTO =========== -->
     <div id="product-detail-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden opacity-0">
         <div class="modal-container bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transform scale-95 opacity-0">
             <div class="p-4 border-b border-brand-light flex justify-between items-center">
@@ -132,7 +122,6 @@
         </div>
     </div>
 
-    <!-- =========== FOOTER =========== -->
     <footer class="bg-brand-light">
         <div class="container mx-auto px-6 py-12 text-center text-brand-secondary">
             <p class="font-serif text-xl text-brand-dark mb-2">TuLogo</p>
@@ -140,24 +129,25 @@
         </div>
     </footer>
 
-    <!-- Firebase -->
     <script type="module">
         // Importar funciones de Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración de Firebase (inyectada por el entorno)
+        // Tu configuración de Firebase
         const firebaseConfig = {
-    apiKey: "AIzaSyCyboSrsngedPn1EUavciJh8bV6PW3L9TY",
-    authDomain: "catalogo-17d5b.firebaseapp.com",
-    projectId: "catalogo-17d5b",
-    storageBucket: "catalogo-17d5b.firebasestorage.app",
-    messagingSenderId: "798293393240",
-    appId: "1:798293393240:web:a640b2e42e2e184aad2f2d"
-  };
+            apiKey: "AIzaSyCyboSrsngedPn1EUavciJh8bV6PW3L9TY",
+            authDomain: "catalogo-17d5b.firebaseapp.com",
+            projectId: "catalogo-17d5b",
+            storageBucket: "catalogo-17d5b.firebasestorage.app",
+            messagingSenderId: "798293393240",
+            appId: "1:798293393240:web:a640b2e42e2e184aad2f2d"
+        };
+        
         // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const appId = firebaseConfig.appId; // <-- ¡ESTA LÍNEA FALTABA!
 
         document.addEventListener('DOMContentLoaded', () => {
             const whatsappNumber = '5491112345678';
@@ -170,14 +160,15 @@
             let allProducts = [];
             const productGrid = document.getElementById('product-grid');
 
-            // Escuchar cambios en la base de datos en tiempo real
-            const productsCollection = collection(db, `/artifacts/${appId}/public/data/products`);
+            // La ruta a tu colección de productos
+            const productsCollection = collection(db, `products`);
+
             onSnapshot(productsCollection, (snapshot) => {
                 allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProducts(allProducts);
             }, (error) => {
                 console.error("Error al obtener productos:", error);
-                if(productGrid) productGrid.innerHTML = '<p class="col-span-full text-center text-red-500">Error al cargar los productos.</p>';
+                if(productGrid) productGrid.innerHTML = '<p class="col-span-full text-center text-red-500">Error al cargar los productos. Revisa las reglas de seguridad de Firestore.</p>';
             });
 
             initHeroSlider();
@@ -207,14 +198,13 @@
                 if (!productGrid) return;
                 productGrid.innerHTML = ''; 
                 if (productsToRender.length === 0) {
-                    productGrid.innerHTML = '<p class="col-span-full text-center text-brand-secondary">No se encontraron productos.</p>';
+                    productGrid.innerHTML = '<p class="col-span-full text-center text-brand-secondary">Aún no hay productos. ¡Agrega el primero desde el panel de administración!</p>';
                     return;
                 }
                 productsToRender.forEach(product => {
-                    // Usar la primera imagen del array o imagen individual, y fallback si no hay imagen
                     const imgSrc = Array.isArray(product.images) && product.images.length
                         ? product.images[0]
-                        : (product.image || 'https://via.placeholder.com/300x300?text=Sin+Imagen');
+                        : 'https://via.placeholder.com/300x300?text=Sin+Imagen';
                     const productCard = document.createElement('div');
                     productCard.className = 'product-card group relative flex flex-col cursor-pointer';
                     productCard.dataset.productId = product.id;
@@ -267,10 +257,8 @@
                         ? product.images[0]
                         : (product.image || 'https://via.placeholder.com/300x300?text=Sin+Imagen');
                     mainImage.src = mainImgSrc;
-                    mainImage.alt = product.name || '';
-                    mainImage.onerror = function() {
-                        this.src = 'https://via.placeholder.com/300x300?text=Sin+Imagen';
-                    };
+                    mainImage.onerror = function() { this.src = 'https://via.placeholder.com/300x300?text=Sin+Imagen'; };
+                    
                     thumbnailContainer.innerHTML = '';
                     if (Array.isArray(product.images) && product.images.length) {
                         product.images.forEach(imgSrc => {
@@ -278,9 +266,7 @@
                             thumb.src = imgSrc;
                             thumb.className = 'w-full h-20 object-cover rounded-md cursor-pointer border-2 hover:border-brand-primary';
                             thumb.classList.toggle('border-brand-primary', imgSrc === mainImgSrc);
-                            thumb.onerror = function() {
-                                this.src = 'https://via.placeholder.com/80x80?text=Sin+Imagen';
-                            };
+                            thumb.onerror = function() { this.src = 'https://via.placeholder.com/80x80?text=Sin+Imagen'; };
                             thumb.addEventListener('click', () => {
                                 mainImage.src = imgSrc;
                                 thumbnailContainer.querySelectorAll('img').forEach(i => i.classList.remove('border-brand-primary'));
@@ -294,11 +280,15 @@
                     whatsappBtn.href = `https://wa.me/${whatsappNumber}?text=${message}`;
 
                     modal.classList.remove('hidden');
-                    setTimeout(() => modal.querySelector('.modal-container').classList.remove('scale-95', 'opacity-0'), 10);
+                    setTimeout(() => {
+                        modal.classList.remove('opacity-0');
+                        modal.querySelector('.modal-container').classList.remove('scale-95', 'opacity-0');
+                    }, 10);
                 }
 
                 function closeModal() {
                     modal.querySelector('.modal-container').classList.add('scale-95', 'opacity-0');
+                    modal.classList.add('opacity-0');
                     setTimeout(() => modal.classList.add('hidden'), 300);
                 }
 

@@ -87,15 +87,22 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración de Firebase (inyectada por el entorno)
-       const firebaseConfig = {
-    apiKey: "AIzaSyCyboSrsngedPn1EUavciJh8bV6PW3L9TY",
-    authDomain: "catalogo-17d5b.firebaseapp.com",
-    projectId: "catalogo-17d5b",
-    storageBucket: "catalogo-17d5b.firebasestorage.app",
-    messagingSenderId: "798293393240",
-    appId: "1:798293393240:web:a640b2e42e2e184aad2f2d"
-  };
+        // Tu configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCyboSrsngedPn1EUavciJh8bV6PW3L9TY",
+            authDomain: "catalogo-17d5b.firebaseapp.com",
+            projectId: "catalogo-17d5b",
+            storageBucket: "catalogo-17d5b.firebasestorage.app",
+            messagingSenderId: "798293393240",
+            appId: "1:798293393240:web:a640b2e42e2e184aad2f2d"
+        };
+        
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const appId = firebaseConfig.appId; // <-- ¡ESTA LÍNEA FALTABA!
+        const productsCollection = collection(db, 'products'); // La ruta a tu colección
+
         document.addEventListener('DOMContentLoaded', function() {
             // --- Autenticación ---
             if (sessionStorage.getItem('isAdminAuthenticated') !== 'true') {
@@ -121,14 +128,14 @@
                 currentProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderProducts(currentProducts);
             }, (error) => {
-                console.error("Error al obtener productos en tiempo real:", error);
-                productListContainer.innerHTML = '<p class="col-span-full text-center text-red-500">Error al cargar los productos desde la base de datos.</p>';
+                console.error("Error al obtener productos:", error);
+                productListContainer.innerHTML = '<p class="text-red-500">Error al cargar. Revisa las reglas de seguridad de Firestore.</p>';
             });
 
             function renderProducts(products) {
-                productListContainer.innerHTML = ''; // Limpiar la lista antes de renderizar
+                productListContainer.innerHTML = '';
                 if (products.length === 0) {
-                    productListContainer.innerHTML = `<p class="text-center text-gray-500">No hay productos para mostrar. ¡Agrega el primero!</p>`;
+                    productListContainer.innerHTML = `<p class="text-center text-gray-500">No hay productos. ¡Agrega el primero!</p>`;
                     return;
                 }
 
@@ -146,11 +153,7 @@
                 `;
                 const tbody = table.querySelector('tbody');
                 products.forEach(product => {
-                    // Usar la primera imagen del array de imágenes o un placeholder
-                    const imgSrc = Array.isArray(product.images) && product.images.length
-                        ? product.images[0]
-                        : 'https://via.placeholder.com/48x48?text=N/A';
-                    
+                    const imgSrc = Array.isArray(product.images) && product.images.length ? product.images[0] : 'https://via.placeholder.com/48x48?text=N/A';
                     const row = document.createElement('tr');
                     row.className = 'border-b border-brand-light/50';
                     row.innerHTML = `
@@ -184,7 +187,6 @@
                     document.getElementById('product-price').value = product.price;
                     document.getElementById('product-description').value = product.description;
                     
-                    // Asegurarse de que `product.images` es un array
                     const images = Array.isArray(product.images) ? product.images : [];
                     images.forEach((url, index) => {
                         if (index === 0) {
@@ -236,34 +238,31 @@
             productForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const id = document.getElementById('product-id').value;
-                const imageUrls = Array.from(document.querySelectorAll('.product-image-url'))
-                                    .map(input => input.value.trim())
-                                    .filter(url => url);
+                const imageUrls = Array.from(document.querySelectorAll('.product-image-url')).map(input => input.value.trim()).filter(url => url);
 
                 if (imageUrls.length === 0) {
-                    alert('Debes agregar al menos una URL de imagen.');
-                    return;
+                    alert('Debes agregar al menos una URL de imagen.'); return;
                 }
 
                 const productData = {
                     name: document.getElementById('product-name').value,
                     price: document.getElementById('product-price').value,
                     description: document.getElementById('product-description').value,
-                    images: imageUrls // Guardar siempre el array de imágenes
+                    images: imageUrls
                 };
 
                 try {
                     if (id) {
-                        const productDoc = doc(db, `/artifacts/${appId}/public/data/products/${id}`);
+                        const productDoc = doc(db, 'products', id);
                         await updateDoc(productDoc, productData);
-                        alert('¡Producto actualizado con éxito!');
+                        alert('¡Producto actualizado!');
                     } else {
                         await addDoc(productsCollection, productData);
-                        alert('¡Producto agregado con éxito!');
+                        alert('¡Producto agregado!');
                     }
                     closeModal();
                 } catch (error) {
-                    alert('Error al guardar el producto.');
+                    alert('Error al guardar el producto. Revisa las reglas de seguridad de Firestore.');
                     console.error("Error al guardar en Firestore: ", error);
                 }
             });
@@ -277,12 +276,11 @@
                 }
 
                 if (target.classList.contains('delete-btn')) {
-                    if (confirm('¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer.')) {
+                    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
                         try {
-                            const productDoc = doc(db, `/artifacts/${appId}/public/data/products/${id}`);
+                            const productDoc = doc(db, 'products', id);
                             await deleteDoc(productDoc);
-                            alert('¡Producto eliminado de la base de datos!');
-                            // No es necesario llamar a renderProducts, onSnapshot lo hará automáticamente.
+                            alert('¡Producto eliminado!');
                         } catch (error) {
                             alert('Error al eliminar el producto.');
                             console.error("Error al eliminar de Firestore: ", error);
