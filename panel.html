@@ -33,16 +33,25 @@
     <header class="bg-white shadow-sm">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <h1 class="font-serif text-2xl font-bold text-brand-dark">Panel de Control</h1>
-            <button id="logout-btn" class="text-sm font-semibold text-brand-primary hover:underline">Cerrar Sesión</button>
+            <div class="flex items-center gap-6">
+                <a href="index.html" class="text-sm font-semibold text-brand-primary hover:underline" target="_blank">Ver Catálogo</a>
+                <button id="logout-btn" class="text-sm font-semibold text-brand-primary hover:underline">Cerrar Sesión</button>
+            </div>
         </div>
     </header>
 
     <main class="container mx-auto px-6 py-12">
-        <div class="flex justify-between items-center mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <h2 class="text-3xl font-bold font-serif text-brand-dark">Mis Productos</h2>
-            <button id="add-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary transition-colors">
-                + Agregar Producto
-            </button>
+            <div class="w-full md:w-auto flex items-center gap-4">
+                 <div class="relative flex-grow">
+                    <input type="search" id="admin-search-bar" placeholder="Buscar por nombre..." class="w-full pl-10 pr-4 py-2 border border-brand-accent rounded-full focus:ring-2 focus:ring-brand-primary focus:outline-none">
+                    <svg class="w-5 h-5 text-brand-secondary absolute top-1/2 left-4 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+                </div>
+                <button id="add-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary transition-colors whitespace-nowrap">
+                    + Agregar
+                </button>
+            </div>
         </div>
 
         <div id="product-list" class="bg-white p-6 rounded-xl shadow-lg">
@@ -87,7 +96,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Tu configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCyboSrsngedPn1EUavciJh8bV6PW3L9TY",
             authDomain: "catalogo-17d5b.firebaseapp.com",
@@ -97,20 +105,16 @@
             appId: "1:798293393240:web:a640b2e42e2e184aad2f2d"
         };
         
-        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const appId = firebaseConfig.appId; // <-- ¡ESTA LÍNEA FALTABA!
-        const productsCollection = collection(db, 'products'); // La ruta a tu colección
+        const productsCollection = collection(db, 'products');
 
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Autenticación ---
             if (sessionStorage.getItem('isAdminAuthenticated') !== 'true') {
                 window.location.href = 'admin.html';
                 return;
             }
 
-            // --- Elementos del DOM ---
             const productListContainer = document.getElementById('product-list');
             const addProductBtn = document.getElementById('add-product-btn');
             const modal = document.getElementById('product-modal');
@@ -120,22 +124,36 @@
             const imageInputsContainer = document.getElementById('image-inputs');
             const addImageFieldBtn = document.getElementById('add-image-field');
             const logoutBtn = document.getElementById('logout-btn');
+            const searchBar = document.getElementById('admin-search-bar'); // <-- Elemento de la barra de búsqueda
 
-            let currentProducts = [];
+            let allProducts = []; // Almacenará todos los productos de Firestore
 
-            // --- Carga y Renderizado de Productos en Tiempo Real ---
             onSnapshot(productsCollection, (snapshot) => {
-                currentProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProducts(currentProducts);
+                allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Renderiza los productos aplicando el filtro de búsqueda actual
+                const searchTerm = searchBar.value.toLowerCase();
+                const filteredProducts = allProducts.filter(product => 
+                    product.name.toLowerCase().includes(searchTerm)
+                );
+                renderProducts(filteredProducts);
             }, (error) => {
                 console.error("Error al obtener productos:", error);
                 productListContainer.innerHTML = '<p class="text-red-500">Error al cargar. Revisa las reglas de seguridad de Firestore.</p>';
             });
 
+            // --- Lógica de Búsqueda ---
+            searchBar.addEventListener('input', () => {
+                const searchTerm = searchBar.value.toLowerCase();
+                const filteredProducts = allProducts.filter(product => 
+                    (product.name && product.name.toLowerCase().includes(searchTerm))
+                );
+                renderProducts(filteredProducts);
+            });
+
             function renderProducts(products) {
                 productListContainer.innerHTML = '';
                 if (products.length === 0) {
-                    productListContainer.innerHTML = `<p class="text-center text-gray-500">No hay productos. ¡Agrega el primero!</p>`;
+                    productListContainer.innerHTML = `<p class="text-center text-gray-500">No se encontraron productos.</p>`;
                     return;
                 }
 
@@ -172,13 +190,12 @@
                 productListContainer.appendChild(table);
             }
 
-            // --- Lógica del Modal ---
             function openModal(productId = null) {
                 productForm.reset();
                 imageInputsContainer.innerHTML = '<input type="url" placeholder="URL de la imagen principal" class="product-image-url w-full px-4 py-2 border border-brand-accent rounded-lg" required>';
                 
                 if (productId) {
-                    const product = currentProducts.find(p => p.id === productId);
+                    const product = allProducts.find(p => p.id === productId);
                     if (!product) return;
 
                     modalTitle.textContent = 'Editar Producto';
@@ -226,7 +243,6 @@
                 imageInputsContainer.appendChild(container);
             }
 
-            // --- Manejo de Eventos ---
             addProductBtn.addEventListener('click', () => openModal());
             cancelBtn.addEventListener('click', closeModal);
             addImageFieldBtn.addEventListener('click', () => addImageField());
@@ -253,8 +269,7 @@
 
                 try {
                     if (id) {
-                        const productDoc = doc(db, 'products', id);
-                        await updateDoc(productDoc, productData);
+                        await updateDoc(doc(db, 'products', id), productData);
                         alert('¡Producto actualizado!');
                     } else {
                         await addDoc(productsCollection, productData);
@@ -262,7 +277,7 @@
                     }
                     closeModal();
                 } catch (error) {
-                    alert('Error al guardar el producto. Revisa las reglas de seguridad de Firestore.');
+                    alert('Error al guardar el producto.');
                     console.error("Error al guardar en Firestore: ", error);
                 }
             });
@@ -270,16 +285,13 @@
             productListContainer.addEventListener('click', async function(event) {
                 const target = event.target;
                 const id = target.dataset.id;
-
                 if (target.classList.contains('edit-btn')) {
                     openModal(id);
                 }
-
                 if (target.classList.contains('delete-btn')) {
                     if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
                         try {
-                            const productDoc = doc(db, 'products', id);
-                            await deleteDoc(productDoc);
+                            await deleteDoc(doc(db, 'products', id));
                             alert('¡Producto eliminado!');
                         } catch (error) {
                             alert('Error al eliminar el producto.');
