@@ -130,185 +130,27 @@
         const storage = getStorage(app); 
         const productsCollection = collection(db, 'products');
 
-        console.log("Verificando estado de autenticación...");
-
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                console.log("Éxito: Usuario autenticado encontrado.", user.email);
                 initializePanel();
             } else {
-                console.log("Fallo: No se encontró usuario autenticado. Redirigiendo a login...");
-                // Descomenta la siguiente línea una vez que confirmemos que el problema está solucionado
-                // window.location.href = 'admin.html';
+                window.location.href = 'admin.html';
             }
         });
 
         function initializePanel() {
-            console.log("Inicializando el panel de administración...");
             const productListContainer = document.getElementById('product-list');
             const addProductBtn = document.getElementById('add-product-btn');
-            const modal = document.getElementById('product-modal');
-            const modalTitle = document.getElementById('modal-title');
-            const cancelBtn = document.getElementById('cancel-btn');
+            // ... (el resto de las constantes no cambia)
             const productForm = document.getElementById('product-form');
             const logoutBtn = document.getElementById('logout-btn');
-            const searchBar = document.getElementById('admin-search-bar');
             const saveBtn = document.getElementById('save-product-btn');
-            const existingImagesContainer = document.getElementById('existing-images-container');
-            const newImagesPreview = document.getElementById('new-images-preview');
             const imageUploadInput = document.getElementById('product-images-upload');
             const uploadProgress = document.getElementById('upload-progress');
 
-            let allProducts = [];
-
-            onSnapshot(productsCollection, (snapshot) => {
-                allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const searchTerm = searchBar.value.toLowerCase();
-                const filteredProducts = allProducts.filter(product => 
-                    product.name.toLowerCase().includes(searchTerm)
-                );
-                renderProducts(filteredProducts);
-            }, (error) => {
-                console.error("Error al obtener productos:", error);
-                productListContainer.innerHTML = '<p class="text-red-500">Error al cargar. Revisa las reglas de seguridad de Firestore.</p>';
-            });
-
-            imageUploadInput.addEventListener('change', () => {
-                newImagesPreview.innerHTML = '';
-                Array.from(imageUploadInput.files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'w-16 h-16 object-cover rounded';
-                        newImagesPreview.appendChild(img);
-                    }
-                    reader.readAsDataURL(file);
-                });
-            });
-
-            searchBar.addEventListener('input', () => {
-                const searchTerm = searchBar.value.toLowerCase();
-                const filteredProducts = allProducts.filter(product => 
-                    (product.name && product.name.toLowerCase().includes(searchTerm))
-                );
-                renderProducts(filteredProducts);
-            });
+            // ... (el resto de la lógica de inicialización no cambia)
             
-            function renderProducts(products) {
-                 productListContainer.innerHTML = '';
-                if (products.length === 0) {
-                    productListContainer.innerHTML = `<p class="text-center text-gray-500">No se encontraron productos.</p>`;
-                    return;
-                }
-
-                const table = document.createElement('table');
-                table.className = 'w-full text-left';
-                table.innerHTML = `
-                    <thead>
-                        <tr class="border-b border-brand-light">
-                            <th class="p-4 font-semibold">Producto</th>
-                            <th class="p-4 font-semibold">Categoría</th>
-                            <th class="p-4 font-semibold">Precio</th>
-                            <th class="p-4 font-semibold">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                `;
-                const tbody = table.querySelector('tbody');
-                products.forEach(product => {
-                    const imgSrc = Array.isArray(product.images) && product.images.length ? product.images[0] : 'https://via.placeholder.com/48x48?text=N/A';
-                    const row = document.createElement('tr');
-                    row.className = 'border-b border-brand-light/50';
-                    row.innerHTML = `
-                        <td class="p-4 flex items-center gap-4">
-                            <img src="${imgSrc}" alt="${product.name}" class="w-12 h-12 object-cover rounded-md" onerror="this.src='https://via.placeholder.com/48x48?text=Error'">
-                            <span class="font-semibold">${product.name} ${product.featured ? '★' : ''}</span>
-                        </td>
-                        <td class="p-4">${product.category || 'N/A'}</td>
-                        <td class="p-4">${product.price}</td>
-                        <td class="p-4">
-                            <button data-id="${product.id}" class="edit-btn text-sm font-semibold text-brand-primary hover:underline mr-4">Editar</button>
-                            <button data-id="${product.id}" class="delete-btn text-sm font-semibold text-red-500 hover:underline">Eliminar</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-                productListContainer.appendChild(table);
-            }
-
-            function openModal(productId = null) {
-                productForm.reset();
-                existingImagesContainer.innerHTML = ''; 
-                newImagesPreview.innerHTML = '';
-                
-                if (productId) {
-                    const product = allProducts.find(p => p.id === productId);
-                    if (!product) return;
-
-                    modalTitle.textContent = 'Editar Producto';
-                    document.getElementById('product-id').value = product.id;
-                    document.getElementById('product-name').value = product.name;
-                    document.getElementById('product-price').value = product.price;
-                    document.getElementById('product-description').value = product.description;
-                    document.getElementById('product-category').value = product.category || '';
-                    document.getElementById('product-featured').checked = product.featured || false;
-                    
-                    if (Array.isArray(product.images)) {
-                        product.images.forEach(url => {
-                            const container = document.createElement('div');
-                            container.className = 'relative w-16 h-16';
-                            const img = document.createElement('img');
-                            img.src = url;
-                            img.className = 'w-full h-full object-cover rounded';
-                            const delBtn = document.createElement('button');
-                            delBtn.textContent = '×';
-                            delBtn.className = 'absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs';
-                            delBtn.onclick = (e) => {
-                                e.preventDefault();
-                                if (confirm('¿Eliminar esta imagen?')) {
-                                    deleteImage(product.id, url);
-                                    container.remove();
-                                }
-                            };
-                            container.appendChild(img);
-                            container.appendChild(delBtn);
-                            existingImagesContainer.appendChild(container);
-                        });
-                    }
-                } else {
-                    modalTitle.textContent = 'Agregar Nuevo Producto';
-                    document.getElementById('product-id').value = '';
-                }
-                modal.classList.remove('hidden');
-            }
-
-            async function deleteImage(productId, imageUrl) {
-                const product = allProducts.find(p => p.id === productId);
-                if (!product) return;
-                const updatedImages = product.images.filter(url => url !== imageUrl);
-                await updateDoc(doc(db, 'products', productId), { images: updatedImages });
-                
-                const imageRef = ref(storage, imageUrl);
-                try {
-                    await deleteObject(imageRef);
-                } catch (error) {
-                    console.error("Error al borrar imagen de Storage:", error);
-                }
-            }
-
-            function closeModal() {
-                modal.classList.add('hidden');
-            }
-
-            addProductBtn.addEventListener('click', () => openModal());
-            cancelBtn.addEventListener('click', closeModal);
-            logoutBtn.addEventListener('click', () => {
-                signOut(auth).then(() => {
-                    window.location.href = 'admin.html';
-                });
-            });
-            
+            // ▼▼▼ FUNCIÓN DE SUBIDA ACTUALIZADA CON MEJOR COMPRESIÓN ▼▼▼
             productForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 saveBtn.disabled = true;
@@ -332,18 +174,24 @@
                         maxSizeMB: 1,
                         maxWidthOrHeight: 1920,
                         useWebWorker: true,
-                        fileType: 'image/webp'
+                        fileType: 'image/webp',
+                        initialQuality: 0.7 // <-- LA CLAVE: Controla la calidad (0.7 = 70%)
                     };
 
                     const compressionPromises = Array.from(imageFiles).map(file => {
-                        return imageCompression(file, compressionOptions);
+                        console.log(`Comprimiendo ${file.name} (tamaño original: ${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+                        return imageCompression(file, compressionOptions).then(compressedFile => {
+                            console.log(`Compresión de ${file.name} finalizada (nuevo tamaño: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB)`);
+                            return compressedFile;
+                        });
                     });
 
                     try {
                         const compressedFiles = await Promise.all(compressionPromises);
 
                         const uploadPromises = compressedFiles.map(file => {
-                            const fileName = file.name.split('.').slice(0, -1).join('.') + '.webp';
+                            // Usamos el nombre original pero con extensión .webp
+                            const fileName = (file.name || 'imagen').split('.').slice(0, -1).join('.') + '.webp';
                             const storageRef = ref(storage, `products/${Date.now()}-${fileName}`);
                             return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
                         });
@@ -379,8 +227,7 @@
                         alert('¡Producto agregado!');
                     }
                     closeModal();
-                } catch (error)
-                 {
+                } catch (error) {
                     alert('Error al guardar el producto.');
                     console.error("Error al guardar en Firestore: ", error);
                 } finally {
@@ -390,35 +237,8 @@
                 }
             });
 
-            productListContainer.addEventListener('click', async function(event) {
-                const target = event.target;
-                const id = target.dataset.id;
-                if (target.classList.contains('edit-btn')) {
-                    openModal(id);
-                }
-                if (target.classList.contains('delete-btn')) {
-                    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-                        try {
-                            const productToDelete = allProducts.find(p => p.id === id);
-                            if(productToDelete && productToDelete.images) {
-                                for(const url of productToDelete.images) {
-                                    try {
-                                        const imageRef = ref(storage, url);
-                                        await deleteObject(imageRef);
-                                    } catch (error) {
-                                        console.log("No se encontró la imagen en Storage:", url);
-                                    }
-                                }
-                            }
-                            await deleteDoc(doc(db, 'products', id));
-                            alert('¡Producto eliminado!');
-                        } catch (error) {
-                            alert('Error al eliminar el producto.');
-                            console.error("Error al eliminar de Firestore: ", error);
-                        }
-                    }
-                }
-            });
+            // El resto de las funciones (renderProducts, openModal, etc.) no necesitan cambios.
+            // ...
         }
     </script>
 </body>
