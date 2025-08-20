@@ -9,15 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
-    
     <style>
         @media (max-width: 767px) {
-            #product-table thead {
-                display: none;
-            }
-            #product-table tbody, #product-table tr, #product-table td {
-                display: block;
-            }
+            #product-table thead { display: none; }
+            #product-table tbody, #product-table tr, #product-table td { display: block; }
             #product-table tr {
                 border: 1px solid #e5e7eb;
                 border-radius: 0.5rem;
@@ -30,9 +25,7 @@
                 text-align: right;
                 border-bottom: 1px solid #f3f4f6;
             }
-            #product-table td:last-child {
-                border-bottom: none;
-            }
+            #product-table td:last-child { border-bottom: none; }
             #product-table td::before {
                 content: attr(data-label);
                 position: absolute;
@@ -51,9 +44,7 @@
                 text-align: left;
                 padding-left: 1rem;
             }
-            #product-table .product-info-cell::before {
-                display: none;
-            }
+            #product-table .product-info-cell::before { display: none; }
         }
     </style>
     <script>
@@ -159,6 +150,7 @@
         </div>
     </div>
 
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -195,7 +187,6 @@
         });
 
         function initializePanel() {
-            // ▼▼▼ LÓGICA RESTAURADA ▼▼▼
             const productListContainer = document.getElementById('product-list');
             const addProductBtn = document.getElementById('add-product-btn');
             const logoutBtn = document.getElementById('logout-btn');
@@ -340,12 +331,18 @@
                 
                 if (imageFiles.length > 0) {
                     uploadProgress.classList.remove('hidden');
-                    const compressionOptions = { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true, fileType: 'image/webp', initialQuality: 0.7 };
+                    const compressionOptions = {
+                        maxSizeMB: 1,
+                        maxWidthOrHeight: 1920,
+                        useWebWorker: true,
+                        fileType: 'image/jpeg', // <-- CAMBIO 1
+                        initialQuality: 0.7
+                    };
                     const compressionPromises = Array.from(imageFiles).map(file => imageCompression(file, compressionOptions));
                     try {
                         const compressedFiles = await Promise.all(compressionPromises);
                         const uploadPromises = compressedFiles.map(file => {
-                            const fileName = (file.name || 'imagen').split('.').slice(0, -1).join('.') + '.webp';
+                            const fileName = (file.name || 'imagen').split('.').slice(0, -1).join('.') + '.jpg'; // <-- CAMBIO 2
                             const storageRef = ref(storage, `products/${Date.now()}-${fileName}`);
                             return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
                         });
