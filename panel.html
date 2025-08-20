@@ -46,7 +46,7 @@
             <div class="w-full md:w-auto flex items-center gap-4">
                  <div class="relative flex-grow">
                     <input type="search" id="admin-search-bar" placeholder="Buscar por nombre..." class="w-full pl-10 pr-4 py-2 border border-brand-accent rounded-full focus:ring-2 focus:ring-brand-primary focus:outline-none">
-                    <svg class="w-5 h-5 text-brand-secondary absolute top-1/2 left-4 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+                    <svg class="w-5 h-5 text-brand-secondary absolute top-1/2 left-4 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5' 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
                 </div>
                 <button id="add-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary transition-colors whitespace-nowrap">
                     + Agregar
@@ -69,68 +69,95 @@
                     <label for="product-name" class="block text-sm font-semibold text-brand-dark mb-1">Nombre</label>
                     <input type="text" id="product-name" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required>
                 </div>
-                <div>
-                    <label for="product-price" class="block text-sm font-semibold text-brand-dark mb-1">Precio</label>
-                    <input type="text" id="product-price" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required>
-                </div>
-                <div>
-                    <label for="product-description" class="block text-sm font-semibold text-brand-dark mb-1">Descripción</label>
-                    <textarea id="product-description" rows="4" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required></textarea>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-brand-dark mb-1">Imágenes (URLs)</label>
-                    <div id="image-inputs" class="space-y-2">
-                        <input type="url" placeholder="URL de la imagen principal" class="product-image-url w-full px-4 py-2 border border-brand-accent rounded-lg" required>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="product-price" class="block text-sm font-semibold text-brand-dark mb-1">Precio</label>
+                        <input type="text" id="product-price" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required>
                     </div>
-                    <button type="button" id="add-image-field" class="text-sm text-brand-primary font-semibold mt-2">+ Agregar otra imagen</button>
+                    <div>
+                        <label for="product-category" class="block text-sm font-semibold text-brand-dark mb-1">Categoría (Opcional)</label>
+                        <input type="text" id="product-category" class="w-full px-4 py-2 border border-brand-accent rounded-lg" placeholder="Ej: Accesorios">
+                    </div>
+                </div>
+                <div>
+                    <label for="product-description" class="block text-sm font-semibold text-brand-dark mb-1">Descripción (Opcional)</label>
+                    <textarea id="product-description" rows="3" class="w-full px-4 py-2 border border-brand-accent rounded-lg"></textarea>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="product-featured" class="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary">
+                    <label for="product-featured" class="ml-2 block text-sm font-semibold text-brand-dark">Marcar como producto destacado</label>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-brand-dark mb-1">Imágenes</label>
+                    <input type="file" id="product-images-upload" multiple accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-accent/50 file:text-brand-primary hover:file:bg-brand-accent">
+                    <div id="new-images-preview" class="mt-2 grid grid-cols-4 gap-2"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-brand-dark mb-1">Imágenes Actuales</label>
+                    <div id="existing-images-container" class="grid grid-cols-4 gap-2"></div>
                 </div>
             </form>
+            <div id="upload-progress" class="p-6 text-center text-brand-dark font-semibold hidden">Subiendo imágenes...</div>
             <div class="p-6 bg-gray-50 rounded-b-xl flex justify-end gap-4">
                 <button type="button" id="cancel-btn" class="text-sm font-semibold text-gray-600 py-2 px-5 rounded-full hover:bg-gray-200">Cancelar</button>
-                <button type="submit" form="product-form" id="save-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary">Guardar Producto</button>
+                <button type="submit" form="product-form" id="save-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary">
+                    Guardar Producto
+                </button>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyCyboSrsngedPn1EUavciJh8bV6PW3L9TY",
-            authDomain: "catalogo-17d5b.firebaseapp.com",
-            projectId: "catalogo-17d5b",
-            storageBucket: "catalogo-17d5b.firebasestorage.app",
-            messagingSenderId: "798293393240",
-            appId: "1:798293393240:web:a640b2e42e2e184aad2f2d"
+          apiKey: "AIzaSyD1UWsKp11n2ZFEHW5LK6zls-AjdywUdTE",
+          authDomain: "semilla-en-flor.firebaseapp.com",
+          projectId: "semilla-en-flor",
+          storageBucket: "semilla-en-flor.firebasestorage.app",
+          messagingSenderId: "435166881891",
+          appId: "1:435166881891:web:aef58261308e357eaeb056",
+          measurementId: "G-NL56E49BTK"
         };
         
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app); 
         const productsCollection = collection(db, 'products');
 
-        document.addEventListener('DOMContentLoaded', function() {
-            if (sessionStorage.getItem('isAdminAuthenticated') !== 'true') {
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // El usuario está autenticado, cargamos el panel
+                initializePanel();
+            } else {
+                // El usuario no está autenticado, lo enviamos al login
                 window.location.href = 'admin.html';
-                return;
             }
+        });
 
+        function initializePanel() {
             const productListContainer = document.getElementById('product-list');
             const addProductBtn = document.getElementById('add-product-btn');
             const modal = document.getElementById('product-modal');
             const modalTitle = document.getElementById('modal-title');
             const cancelBtn = document.getElementById('cancel-btn');
             const productForm = document.getElementById('product-form');
-            const imageInputsContainer = document.getElementById('image-inputs');
-            const addImageFieldBtn = document.getElementById('add-image-field');
             const logoutBtn = document.getElementById('logout-btn');
-            const searchBar = document.getElementById('admin-search-bar'); // <-- Elemento de la barra de búsqueda
+            const searchBar = document.getElementById('admin-search-bar');
+            const saveBtn = document.getElementById('save-product-btn');
+            const existingImagesContainer = document.getElementById('existing-images-container');
+            const newImagesPreview = document.getElementById('new-images-preview');
+            const imageUploadInput = document.getElementById('product-images-upload');
+            const uploadProgress = document.getElementById('upload-progress');
 
-            let allProducts = []; // Almacenará todos los productos de Firestore
+            let allProducts = [];
 
             onSnapshot(productsCollection, (snapshot) => {
                 allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Renderiza los productos aplicando el filtro de búsqueda actual
                 const searchTerm = searchBar.value.toLowerCase();
                 const filteredProducts = allProducts.filter(product => 
                     product.name.toLowerCase().includes(searchTerm)
@@ -141,7 +168,20 @@
                 productListContainer.innerHTML = '<p class="text-red-500">Error al cargar. Revisa las reglas de seguridad de Firestore.</p>';
             });
 
-            // --- Lógica de Búsqueda ---
+            imageUploadInput.addEventListener('change', () => {
+                newImagesPreview.innerHTML = '';
+                Array.from(imageUploadInput.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'w-16 h-16 object-cover rounded';
+                        newImagesPreview.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            });
+
             searchBar.addEventListener('input', () => {
                 const searchTerm = searchBar.value.toLowerCase();
                 const filteredProducts = allProducts.filter(product => 
@@ -149,7 +189,7 @@
                 );
                 renderProducts(filteredProducts);
             });
-
+            
             function renderProducts(products) {
                 productListContainer.innerHTML = '';
                 if (products.length === 0) {
@@ -163,6 +203,7 @@
                     <thead>
                         <tr class="border-b border-brand-light">
                             <th class="p-4 font-semibold">Producto</th>
+                            <th class="p-4 font-semibold">Categoría</th>
                             <th class="p-4 font-semibold">Precio</th>
                             <th class="p-4 font-semibold">Acciones</th>
                         </tr>
@@ -177,8 +218,9 @@
                     row.innerHTML = `
                         <td class="p-4 flex items-center gap-4">
                             <img src="${imgSrc}" alt="${product.name}" class="w-12 h-12 object-cover rounded-md" onerror="this.src='https://via.placeholder.com/48x48?text=Error'">
-                            <span class="font-semibold">${product.name}</span>
+                            <span class="font-semibold">${product.name} ${product.featured ? '★' : ''}</span>
                         </td>
+                        <td class="p-4">${product.category || 'N/A'}</td>
                         <td class="p-4">${product.price}</td>
                         <td class="p-4">
                             <button data-id="${product.id}" class="edit-btn text-sm font-semibold text-brand-primary hover:underline mr-4">Editar</button>
@@ -192,7 +234,8 @@
 
             function openModal(productId = null) {
                 productForm.reset();
-                imageInputsContainer.innerHTML = '<input type="url" placeholder="URL de la imagen principal" class="product-image-url w-full px-4 py-2 border border-brand-accent rounded-lg" required>';
+                existingImagesContainer.innerHTML = ''; 
+                newImagesPreview.innerHTML = '';
                 
                 if (productId) {
                     const product = allProducts.find(p => p.id === productId);
@@ -203,15 +246,31 @@
                     document.getElementById('product-name').value = product.name;
                     document.getElementById('product-price').value = product.price;
                     document.getElementById('product-description').value = product.description;
+                    document.getElementById('product-category').value = product.category || '';
+                    document.getElementById('product-featured').checked = product.featured || false;
                     
-                    const images = Array.isArray(product.images) ? product.images : [];
-                    images.forEach((url, index) => {
-                        if (index === 0) {
-                            imageInputsContainer.querySelector('input').value = url;
-                        } else {
-                            addImageField(url);
-                        }
-                    });
+                    if (Array.isArray(product.images)) {
+                        product.images.forEach(url => {
+                            const container = document.createElement('div');
+                            container.className = 'relative w-16 h-16';
+                            const img = document.createElement('img');
+                            img.src = url;
+                            img.className = 'w-full h-full object-cover rounded';
+                            const delBtn = document.createElement('button');
+                            delBtn.textContent = '×';
+                            delBtn.className = 'absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs';
+                            delBtn.onclick = (e) => {
+                                e.preventDefault();
+                                if (confirm('¿Eliminar esta imagen?')) {
+                                    deleteImage(product.id, url);
+                                    container.remove();
+                                }
+                            };
+                            container.appendChild(img);
+                            container.appendChild(delBtn);
+                            existingImagesContainer.appendChild(container);
+                        });
+                    }
                 } else {
                     modalTitle.textContent = 'Agregar Nuevo Producto';
                     document.getElementById('product-id').value = '';
@@ -219,51 +278,75 @@
                 modal.classList.remove('hidden');
             }
 
+            async function deleteImage(productId, imageUrl) {
+                const product = allProducts.find(p => p.id === productId);
+                if (!product) return;
+                const updatedImages = product.images.filter(url => url !== imageUrl);
+                await updateDoc(doc(db, 'products', productId), { images: updatedImages });
+                
+                const imageRef = ref(storage, imageUrl);
+                try {
+                    await deleteObject(imageRef);
+                } catch (error) {
+                    console.error("Error al borrar imagen de Storage:", error);
+                }
+            }
+
             function closeModal() {
                 modal.classList.add('hidden');
             }
 
-            function addImageField(value = '') {
-                const container = document.createElement('div');
-                container.className = 'relative mt-2';
-                const input = document.createElement('input');
-                input.type = 'url';
-                input.placeholder = 'URL de imagen adicional';
-                input.className = 'product-image-url w-full px-4 py-2 border border-brand-accent rounded-lg';
-                input.value = value;
-                
-                const removeBtn = document.createElement('button');
-                removeBtn.type = 'button';
-                removeBtn.textContent = '×';
-                removeBtn.className = 'absolute right-2 top-1/2 -translate-y-1/2 text-red-500 font-bold text-xl';
-                removeBtn.onclick = () => container.remove();
-                
-                container.appendChild(input);
-                container.appendChild(removeBtn);
-                imageInputsContainer.appendChild(container);
-            }
-
             addProductBtn.addEventListener('click', () => openModal());
             cancelBtn.addEventListener('click', closeModal);
-            addImageFieldBtn.addEventListener('click', () => addImageField());
             logoutBtn.addEventListener('click', () => {
-                sessionStorage.removeItem('isAdminAuthenticated');
-                window.location.href = 'admin.html';
+                signOut(auth).then(() => {
+                    sessionStorage.removeItem('isAdminAuthenticated');
+                    window.location.href = 'admin.html';
+                });
             });
 
             productForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
-                const id = document.getElementById('product-id').value;
-                const imageUrls = Array.from(document.querySelectorAll('.product-image-url')).map(input => input.value.trim()).filter(url => url);
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Guardando...';
 
-                if (imageUrls.length === 0) {
-                    alert('Debes agregar al menos una URL de imagen.'); return;
+                const id = document.getElementById('product-id').value;
+                const imageFiles = imageUploadInput.files;
+                let imageUrls = [];
+
+                if (id) {
+                    const product = allProducts.find(p => p.id === id);
+                    if (product && Array.isArray(product.images)) {
+                        imageUrls = product.images;
+                    }
+                }
+                
+                if (imageFiles.length > 0) {
+                    uploadProgress.classList.remove('hidden');
+                    const uploadPromises = Array.from(imageFiles).map(file => {
+                        const storageRef = ref(storage, `products/${Date.now()}-${file.name}`);
+                        return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
+                    });
+
+                    try {
+                        const newImageUrls = await Promise.all(uploadPromises);
+                        imageUrls = imageUrls.concat(newImageUrls);
+                    } catch (error) {
+                        console.error("Error al subir imágenes: ", error);
+                        alert('Error al subir las imágenes.');
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Guardar Producto';
+                        uploadProgress.classList.add('hidden');
+                        return;
+                    }
                 }
 
                 const productData = {
                     name: document.getElementById('product-name').value,
                     price: document.getElementById('product-price').value,
                     description: document.getElementById('product-description').value,
+                    category: document.getElementById('product-category').value.trim(),
+                    featured: document.getElementById('product-featured').checked,
                     images: imageUrls
                 };
 
@@ -279,6 +362,10 @@
                 } catch (error) {
                     alert('Error al guardar el producto.');
                     console.error("Error al guardar en Firestore: ", error);
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Guardar Producto';
+                    uploadProgress.classList.add('hidden');
                 }
             });
 
@@ -291,6 +378,17 @@
                 if (target.classList.contains('delete-btn')) {
                     if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
                         try {
+                            const productToDelete = allProducts.find(p => p.id === id);
+                            if(productToDelete && productToDelete.images) {
+                                for(const url of productToDelete.images) {
+                                    try {
+                                        const imageRef = ref(storage, url);
+                                        await deleteObject(imageRef);
+                                    } catch (error) {
+                                        console.log("No se encontró la imagen en Storage:", url);
+                                    }
+                                }
+                            }
                             await deleteDoc(doc(db, 'products', id));
                             alert('¡Producto eliminado!');
                         } catch (error) {
@@ -300,7 +398,7 @@
                     }
                 }
             });
-        });
+        }
     </script>
 </body>
 </html>

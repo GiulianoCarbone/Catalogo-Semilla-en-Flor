@@ -34,6 +34,10 @@
         <p class="text-center text-brand-secondary mb-8">Ingresa para gestionar tus productos.</p>
         <form id="login-form">
             <div class="mb-4">
+                <label for="email" class="block text-sm font-semibold text-brand-dark mb-2">Correo Electrónico</label>
+                <input type="email" id="email" class="w-full px-4 py-2 border border-brand-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary" required>
+            </div>
+            <div class="mb-4">
                 <label for="password" class="block text-sm font-semibold text-brand-dark mb-2">Contraseña</label>
                 <input type="password" id="password" class="w-full px-4 py-2 border border-brand-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary" required>
             </div>
@@ -44,20 +48,42 @@
         </form>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // IMPORTANTE: Pega aquí la misma configuración de Firebase que usas en tus otros archivos
+       const firebaseConfig = {
+  apiKey: "AIzaSyD1UWsKp11n2ZFEHW5LK6zls-AjdywUdTE",
+  authDomain: "semilla-en-flor.firebaseapp.com",
+  projectId: "semilla-en-flor",
+  // ▼▼▼ ESTA ES LA LÍNEA CORREGIDA Y CORRECTA ▼▼▼
+  storageBucket: "semilla-en-flor.firebasestorage.app",
+  messagingSenderId: "435166881891",
+  appId: "1:435166881891:web:aef58261308e357eaeb056",
+  measurementId: "G-NL56E49BTK"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
         document.getElementById('login-form').addEventListener('submit', function(event) {
             event.preventDefault();
+            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('error-message');
             
-            // Contraseña simple para el ejemplo. En un proyecto real, esto debe ser manejado por un backend seguro.
-            if (password === 'admin') {
-                // Guardar un token de sesión simulado
-                sessionStorage.setItem('isAdminAuthenticated', 'true');
-                window.location.href = 'panel.html';
-            } else {
-                errorMessage.textContent = 'Contraseña incorrecta.';
-            }
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    // Login exitoso
+                    sessionStorage.setItem('isAdminAuthenticated', 'true');
+                    window.location.href = 'panel.html';
+                })
+                .catch((error) => {
+                    // Error en el login
+                    errorMessage.textContent = 'Correo o contraseña incorrectos.';
+                    console.error("Error de autenticación:", error);
+                });
         });
     </script>
 </body>

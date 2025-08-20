@@ -16,11 +16,11 @@
             theme: {
                 extend: {
                     colors: {
-                        'brand-primary': '#A98870',      // Marrón más oscuro
-                        'brand-secondary': '#C3A995',  // Beige medio
-                        'brand-accent': '#D6C1B5',      // Beige rosado claro
-                        'brand-light': '#FBF9F6',       // Crema muy claro (más blanco)
-                        'brand-dark': '#4a3f35',        // Un marrón oscuro para texto
+                        'brand-primary': '#A98870',
+                        'brand-secondary': '#C3A995',
+                        'brand-accent': '#D6C1B5',
+                        'brand-light': '#FBF9F6',
+                        'brand-dark': '#4a3f35',
                     },
                     fontFamily: {
                         'sans': ['Montserrat', 'sans-serif'],
@@ -83,15 +83,18 @@
         <div class="container mx-auto px-6">
             <h3 class="font-serif text-4xl font-bold text-center mb-6 text-brand-dark">Nuestro Catálogo ♡</h3>
             
-            <div class="w-full max-w-lg mx-auto mb-12">
+            <div class="w-full max-w-lg mx-auto mb-8">
                 <div class="relative">
                     <input type="search" id="search-bar" placeholder="Buscar relojes, accesorios, etc." class="w-full pl-10 pr-4 py-3 border border-brand-accent rounded-full focus:ring-2 focus:ring-brand-primary focus:outline-none">
                     <svg class="w-5 h-5 text-brand-secondary absolute top-1/2 left-4 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
                 </div>
             </div>
+            
+            <div id="category-filters" class="flex justify-center flex-wrap gap-2 mb-12"></div>
 
             <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-                </div>
+                <div class="product-skeleton col-span-full text-center text-brand-secondary">Cargando productos...</div>
+            </div>
         </div>
     </section>
 
@@ -130,24 +133,22 @@
     </footer>
 
     <script type="module">
-        // Importar funciones de Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Tu configuración de Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyCyboSrsngedPn1EUavciJh8bV6PW3L9TY",
-            authDomain: "catalogo-17d5b.firebaseapp.com",
-            projectId: "catalogo-17d5b",
-            storageBucket: "catalogo-17d5b.firebasestorage.app",
-            messagingSenderId: "798293393240",
-            appId: "1:798293393240:web:a640b2e42e2e184aad2f2d"
-        };
+  apiKey: "AIzaSyD1UWsKp11n2ZFEHW5LK6zls-AjdywUdTE",
+  authDomain: "semilla-en-flor.firebaseapp.com",
+  projectId: "semilla-en-flor",
+  // ▼▼▼ ESTA ES LA LÍNEA CORREGIDA Y CORRECTA ▼▼▼
+  storageBucket: "semilla-en-flor.firebasestorage.app",
+  messagingSenderId: "435166881891",
+  appId: "1:435166881891:web:aef58261308e357eaeb056",
+  measurementId: "G-NL56E49BTK"
+};
         
-        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const appId = firebaseConfig.appId; // <-- ¡ESTA LÍNEA FALTABA!
 
         document.addEventListener('DOMContentLoaded', () => {
             const whatsappNumber = '5493863413665';
@@ -159,12 +160,12 @@
             
             let allProducts = [];
             const productGrid = document.getElementById('product-grid');
-
-            // La ruta a tu colección de productos
+            const categoryFilters = document.getElementById('category-filters');
             const productsCollection = collection(db, `products`);
 
             onSnapshot(productsCollection, (snapshot) => {
                 allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderCategories(allProducts);
                 renderProducts(allProducts);
             }, (error) => {
                 console.error("Error al obtener productos:", error);
@@ -186,19 +187,40 @@
                     sliderContainer.appendChild(slide);
                 });
                 let currentSlide = 0;
-                const slides = sliderContainer.querySelectorAll('.slide');
                 setInterval(() => {
-                    slides[currentSlide].style.opacity = '0';
-                    currentSlide = (currentSlide + 1) % slides.length;
-                    slides[currentSlide].style.opacity = '1';
+                    const slides = sliderContainer.querySelectorAll('.slide');
+                    if (slides.length > 0) {
+                        slides[currentSlide].style.opacity = '0';
+                        currentSlide = (currentSlide + 1) % slides.length;
+                        slides[currentSlide].style.opacity = '1';
+                    }
                 }, 5000);
+            }
+
+            function renderCategories(products) {
+                const categories = ['Todos', ...new Set(products.map(p => p.category).filter(Boolean))];
+                categoryFilters.innerHTML = '';
+                categories.forEach(category => {
+                    const button = document.createElement('button');
+                    button.textContent = category;
+                    button.className = 'px-4 py-2 text-sm font-semibold rounded-full border border-brand-accent hover:bg-brand-accent transition-colors';
+                    button.onclick = () => {
+                        const filtered = category === 'Todos' ? allProducts : allProducts.filter(p => p.category === category);
+                        renderProducts(filtered);
+                        // Estilo activo
+                        categoryFilters.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-brand-primary', 'text-white'));
+                        button.classList.add('bg-brand-primary', 'text-white');
+                    };
+                    categoryFilters.appendChild(button);
+                });
+                if(categoryFilters.firstChild) categoryFilters.firstChild.classList.add('bg-brand-primary', 'text-white');
             }
 
             function renderProducts(productsToRender) {
                 if (!productGrid) return;
                 productGrid.innerHTML = ''; 
                 if (productsToRender.length === 0) {
-                    productGrid.innerHTML = '<p class="col-span-full text-center text-brand-secondary">Aún no hay productos. ¡Agrega el primero desde el panel de administración!</p>';
+                    productGrid.innerHTML = '<p class="col-span-full text-center text-brand-secondary">No se encontraron productos.</p>';
                     return;
                 }
                 productsToRender.forEach(product => {
@@ -215,7 +237,7 @@
                                 onerror="this.src='https://via.placeholder.com/300x300?text=Sin+Imagen'">
                         </div>
                         <div class="pt-4 flex flex-col">
-                            <h4 class="text-base font-semibold text-brand-dark">${product.name}</h4>
+                            <h4 class="text-base font-semibold text-brand-dark">${product.name} ${product.featured ? '<span>★</span>' : ''}</h4>
                             <p class="text-sm text-brand-secondary mt-1">${product.price}</p>
                             <a class="product-details-link text-sm font-semibold text-brand-primary mt-2 self-start">Ver detalles</a>
                         </div>`;
@@ -250,7 +272,7 @@
                     const product = allProducts.find(p => p.id == productId);
                     if (!product) return;
 
-                    productName.textContent = product.name || '';
+                    productName.textContent = `${product.name || ''} ${product.featured ? '★' : ''}`;
                     productPrice.textContent = product.price || '';
                     productDescription.textContent = product.description || '';
                     const mainImgSrc = Array.isArray(product.images) && product.images.length
