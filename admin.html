@@ -32,7 +32,8 @@
     <div class="w-full max-w-sm mx-auto p-8 bg-white rounded-xl shadow-lg">
         <h1 class="font-serif text-3xl font-bold text-center text-brand-dark mb-2">Acceso Admin</h1>
         <p class="text-center text-brand-secondary mb-8">Ingresa para gestionar tus productos.</p>
-        <form id="login-form">
+        
+        <div id="login-container">
             <div class="mb-4">
                 <label for="email" class="block text-sm font-semibold text-brand-dark mb-2">Correo Electrónico</label>
                 <input type="email" id="email" class="w-full px-4 py-2 border border-brand-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary" required>
@@ -41,11 +42,12 @@
                 <label for="password" class="block text-sm font-semibold text-brand-dark mb-2">Contraseña</label>
                 <input type="password" id="password" class="w-full px-4 py-2 border border-brand-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary" required>
             </div>
-            <button type="submit" class="w-full bg-brand-primary text-white font-semibold py-3 rounded-lg hover:bg-brand-secondary transition-colors duration-300">
+            <button type="button" id="login-button" class="w-full bg-brand-primary text-white font-semibold py-3 rounded-lg hover:bg-brand-secondary transition-colors duration-300">
                 Ingresar
             </button>
             <p id="error-message" class="text-red-500 text-sm text-center mt-4"></p>
-        </form>
+        </div>
+        
     </div>
 
     <script type="module">
@@ -64,29 +66,33 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const loginButton = document.getElementById('login-button');
+        const errorMessage = document.getElementById('error-message');
 
-        document.getElementById('login-form').addEventListener('submit', function(event) {
-            event.preventDefault();
+        async function handleLogin() {
+            // ▼▼▼ ALERTA DE PRUEBA ▼▼▼
+            alert("El botón fue presionado. Intentando iniciar sesión...");
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('error-message');
-            
-            // ▼▼▼ CAMBIO IMPORTANTE: Le decimos a Firebase que RECUERDE la sesión localmente ▼▼▼
-            setPersistence(auth, browserLocalPersistence)
-              .then(() => {
-                // Ahora que la persistencia está configurada, intentamos el login
-                return signInWithEmailAndPassword(auth, email, password);
-              })
-              .then((userCredential) => {
-                // Login exitoso
+
+            loginButton.disabled = true;
+            loginButton.textContent = 'Ingresando...';
+            errorMessage.textContent = '';
+
+            try {
+                await setPersistence(auth, browserLocalPersistence);
+                await signInWithEmailAndPassword(auth, email, password);
                 window.location.href = 'panel.html';
-              })
-              .catch((error) => {
-                // Error en el login
+            } catch (error) {
                 errorMessage.textContent = 'Correo o contraseña incorrectos.';
                 console.error("Error de autenticación:", error);
-              });
-        });
+                loginButton.disabled = false;
+                loginButton.textContent = 'Ingresar';
+            }
+        }
+
+        loginButton.addEventListener('click', handleLogin);
     </script>
 </body>
 </html>
