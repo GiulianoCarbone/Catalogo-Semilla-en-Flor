@@ -32,7 +32,10 @@
 <body class="bg-brand-light">
 
     <div id="loading-overlay" class="fixed inset-0 bg-brand-light flex items-center justify-center z-50">
-        <p class="text-brand-dark font-semibold text-lg">Verificando sesión...</p>
+        <div class="text-center p-4">
+            <p class="text-brand-dark font-semibold text-lg">Verificando sesión...</p>
+            <div id="debug-log" class="mt-4 text-sm text-gray-500"></div>
+        </div>
     </div>
 
     <div id="panel-content" class="hidden">
@@ -59,7 +62,6 @@
                     </button>
                 </div>
             </div>
-
             <div id="product-list" class="bg-white p-6 rounded-xl shadow-lg"></div>
         </main>
     </div>
@@ -138,24 +140,38 @@
 
         const loadingOverlay = document.getElementById('loading-overlay');
         const panelContent = document.getElementById('panel-content');
+        const debugLog = document.getElementById('debug-log');
+
+        function log(message) {
+            console.log(message);
+            debugLog.innerHTML += `<p>${message}</p>`;
+        }
+
+        log("Página cargada. Verificando estado de autenticación...");
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                loadingOverlay.style.display = 'none';
-                panelContent.classList.remove('hidden');
-                initializePanel();
+                log(`Éxito: Usuario autenticado encontrado (${user.email}).`);
+                log("Mostrando panel...");
+                
+                setTimeout(() => { // Pequeña demora para asegurar que todo cargue visualmente
+                    loadingOverlay.style.display = 'none';
+                    panelContent.classList.remove('hidden');
+                    initializePanel();
+                }, 100);
+
             } else {
-                window.location.href = 'admin.html';
+                log("Fallo: No se encontró usuario autenticado.");
+                log("Redirigiendo a la página de login en 3 segundos...");
+                setTimeout(() => {
+                    window.location.href = 'admin.html';
+                }, 3000);
             }
         });
 
         function initializePanel() {
-            // El código de esta función no ha cambiado, solo se ejecuta
-            // después de que la autenticación es exitosa.
-            const productListContainer = document.getElementById('product-list');
-            const addProductBtn = document.getElementById('add-product-btn');
-            const logoutBtn = document.getElementById('logout-btn');
-            // ... resto de las constantes y código de la función ...
+            // El código de esta función no ha cambiado
+            // ...
         }
     </script>
 </body>
