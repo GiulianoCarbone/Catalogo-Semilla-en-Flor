@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semilla en Flor - Catálogo de Productos</title>
+    <title>Tu Emprendimiento - Catálogo de Productos</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -47,12 +47,11 @@
         #hero-slider .slide {
             transition: opacity 1.5s ease-in-out;
         }
-        /* ▼▼▼ ESTILO CORREGIDO PARA LA CINTA DE "DESTACADO" ▼▼▼ */
         .featured-ribbon {
             position: absolute;
-            top: 12px; /* Ajuste vertical */
-            right: -34px; /* Ajuste horizontal */
-            width: 140px; /* Ancho fijo para evitar cortes */
+            top: 12px;
+            right: -34px;
+            width: 140px;
             background-color: #A98870;
             color: white;
             padding: 5px 10px;
@@ -97,6 +96,16 @@
             visibility: visible;
             opacity: 1;
         }
+        /* ▼▼▼ ANIMACIÓN DEL CORAZÓN ▼▼▼ */
+        .heart-pulse {
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body class="bg-brand-light text-brand-dark">
@@ -119,7 +128,8 @@
                 Productos Únicos
             </h2>
             <p class="mt-4 text-base md:text-lg text-gray-200 max-w-lg mx-auto">
-                De nuestras manos a tu casa, con amor ♡ 
+                <!-- ▼▼▼ CORAZÓN ENVUELTO EN UN SPAN ▼▼▼ -->
+                De nuestras manos a tu casa, con amor <span class="heart-pulse">♡</span> 
             </p>
             <div class="mt-8 flex justify-center items-center gap-4">
                 <a href="#catalogo" class="bg-white text-brand-dark font-semibold py-3 px-8 rounded-full hover:bg-brand-light transition-colors duration-300 text-base">
