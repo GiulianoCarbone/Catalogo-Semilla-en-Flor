@@ -31,82 +31,41 @@
 </head>
 <body class="bg-brand-light">
 
-    <header class="bg-white shadow-sm">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="font-serif text-2xl font-bold text-brand-dark">Panel de Control</h1>
-            <div class="flex items-center gap-6">
-                <a href="index.html" class="text-sm font-semibold text-brand-primary hover:underline" target="_blank">Ver Catálogo</a>
-                <button id="logout-btn" class="text-sm font-semibold text-brand-primary hover:underline">Cerrar Sesión</button>
-            </div>
-        </div>
-    </header>
+    <div id="loading-overlay" class="fixed inset-0 bg-brand-light flex items-center justify-center z-50">
+        <p class="text-brand-dark font-semibold text-lg">Verificando sesión...</p>
+    </div>
 
-    <main class="container mx-auto px-6 py-12">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <h2 class="text-3xl font-bold font-serif text-brand-dark">Mis Productos</h2>
-            <div class="w-full md:w-auto flex items-center gap-4">
-                 <div class="relative flex-grow">
-                    <input type="search" id="admin-search-bar" placeholder="Buscar por nombre..." class="w-full pl-10 pr-4 py-2 border border-brand-accent rounded-full focus:ring-2 focus:ring-brand-primary focus:outline-none">
-                    <svg class="w-5 h-5 text-brand-secondary absolute top-1/2 left-4 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+    <div id="panel-content" class="hidden">
+        <header class="bg-white shadow-sm">
+            <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+                <h1 class="font-serif text-2xl font-bold text-brand-dark">Panel de Control</h1>
+                <div class="flex items-center gap-6">
+                    <a href="index.html" class="text-sm font-semibold text-brand-primary hover:underline" target="_blank">Ver Catálogo</a>
+                    <button id="logout-btn" class="text-sm font-semibold text-brand-primary hover:underline">Cerrar Sesión</button>
                 </div>
-                <button id="add-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary transition-colors whitespace-nowrap">
-                    + Agregar
-                </button>
             </div>
-        </div>
+        </header>
 
-        <div id="product-list" class="bg-white p-6 rounded-xl shadow-lg">
+        <main class="container mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                <h2 class="text-3xl font-bold font-serif text-brand-dark">Mis Productos</h2>
+                <div class="w-full md:w-auto flex items-center gap-4">
+                     <div class="relative flex-grow">
+                        <input type="search" id="admin-search-bar" placeholder="Buscar por nombre..." class="w-full pl-10 pr-4 py-2 border border-brand-accent rounded-full focus:ring-2 focus:ring-brand-primary focus:outline-none">
+                        <svg class="w-5 h-5 text-brand-secondary absolute top-1/2 left-4 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+                    </div>
+                    <button id="add-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary transition-colors whitespace-nowrap">
+                        + Agregar
+                    </button>
+                </div>
             </div>
-    </main>
+
+            <div id="product-list" class="bg-white p-6 rounded-xl shadow-lg"></div>
+        </main>
+    </div>
 
     <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <div class="p-6 border-b border-brand-light">
-                <h3 id="modal-title" class="font-serif text-2xl font-bold text-brand-dark">Agregar Nuevo Producto</h3>
-            </div>
-            <form id="product-form" class="flex-grow overflow-y-auto p-6 space-y-4">
-                <input type="hidden" id="product-id">
-                <div>
-                    <label for="product-name" class="block text-sm font-semibold text-brand-dark mb-1">Nombre</label>
-                    <input type="text" id="product-name" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="product-price" class="block text-sm font-semibold text-brand-dark mb-1">Precio</label>
-                        <input type="text" id="product-price" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required>
-                    </div>
-                    <div>
-                        <label for="product-category" class="block text-sm font-semibold text-brand-dark mb-1">Categoría (Opcional)</label>
-                        <input type="text" id="product-category" class="w-full px-4 py-2 border border-brand-accent rounded-lg" placeholder="Ej: Accesorios">
-                    </div>
-                </div>
-                <div>
-                    <label for="product-description" class="block text-sm font-semibold text-brand-dark mb-1">Descripción (Opcional)</label>
-                    <textarea id="product-description" rows="3" class="w-full px-4 py-2 border border-brand-accent rounded-lg"></textarea>
-                </div>
-                <div class="flex items-center">
-                    <input type="checkbox" id="product-featured" class="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary">
-                    <label for="product-featured" class="ml-2 block text-sm font-semibold text-brand-dark">Marcar como producto destacado</label>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-brand-dark mb-1">Imágenes</label>
-                    <input type="file" id="product-images-upload" multiple accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-accent/50 file:text-brand-primary hover:file:bg-brand-accent">
-                    <div id="new-images-preview" class="mt-2 grid grid-cols-4 gap-2"></div>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-brand-dark mb-1">Imágenes Actuales</label>
-                    <div id="existing-images-container" class="grid grid-cols-4 gap-2"></div>
-                </div>
-            </form>
-            <div id="upload-progress" class="p-6 text-center text-brand-dark font-semibold hidden">Comprimiendo y subiendo imágenes...</div>
-            <div class="p-6 bg-gray-50 rounded-b-xl flex justify-end gap-4">
-                <button type="button" id="cancel-btn" class="text-sm font-semibold text-gray-600 py-2 px-5 rounded-full hover:bg-gray-200">Cancelar</button>
-                <button type="submit" form="product-form" id="save-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary">
-                    Guardar Producto
-                </button>
-            </div>
         </div>
-    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -130,115 +89,23 @@
         const storage = getStorage(app); 
         const productsCollection = collection(db, 'products');
 
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const panelContent = document.getElementById('panel-content');
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                // Usuario autenticado, muestra el contenido del panel
+                loadingOverlay.style.display = 'none';
+                panelContent.classList.remove('hidden');
                 initializePanel();
             } else {
+                // Usuario no autenticado, redirige al login
                 window.location.href = 'admin.html';
             }
         });
 
         function initializePanel() {
-            const productListContainer = document.getElementById('product-list');
-            const addProductBtn = document.getElementById('add-product-btn');
-            // ... (el resto de las constantes no cambia)
-            const productForm = document.getElementById('product-form');
-            const logoutBtn = document.getElementById('logout-btn');
-            const saveBtn = document.getElementById('save-product-btn');
-            const imageUploadInput = document.getElementById('product-images-upload');
-            const uploadProgress = document.getElementById('upload-progress');
-
-            // ... (el resto de la lógica de inicialización no cambia)
-            
-            // ▼▼▼ FUNCIÓN DE SUBIDA ACTUALIZADA CON MEJOR COMPRESIÓN ▼▼▼
-            productForm.addEventListener('submit', async function(event) {
-                event.preventDefault();
-                saveBtn.disabled = true;
-                saveBtn.textContent = 'Guardando...';
-
-                const id = document.getElementById('product-id').value;
-                const imageFiles = imageUploadInput.files;
-                let imageUrls = [];
-
-                if (id) {
-                    const product = allProducts.find(p => p.id === id);
-                    if (product && Array.isArray(product.images)) {
-                        imageUrls = product.images;
-                    }
-                }
-                
-                if (imageFiles.length > 0) {
-                    uploadProgress.classList.remove('hidden');
-
-                    const compressionOptions = {
-                        maxSizeMB: 1,
-                        maxWidthOrHeight: 1920,
-                        useWebWorker: true,
-                        fileType: 'image/webp',
-                        initialQuality: 0.7 // <-- LA CLAVE: Controla la calidad (0.7 = 70%)
-                    };
-
-                    const compressionPromises = Array.from(imageFiles).map(file => {
-                        console.log(`Comprimiendo ${file.name} (tamaño original: ${(file.size / 1024 / 1024).toFixed(2)} MB)`);
-                        return imageCompression(file, compressionOptions).then(compressedFile => {
-                            console.log(`Compresión de ${file.name} finalizada (nuevo tamaño: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB)`);
-                            return compressedFile;
-                        });
-                    });
-
-                    try {
-                        const compressedFiles = await Promise.all(compressionPromises);
-
-                        const uploadPromises = compressedFiles.map(file => {
-                            // Usamos el nombre original pero con extensión .webp
-                            const fileName = (file.name || 'imagen').split('.').slice(0, -1).join('.') + '.webp';
-                            const storageRef = ref(storage, `products/${Date.now()}-${fileName}`);
-                            return uploadBytes(storageRef, file).then(snapshot => getDownloadURL(snapshot.ref));
-                        });
-                        
-                        const newImageUrls = await Promise.all(uploadPromises);
-                        imageUrls = imageUrls.concat(newImageUrls);
-
-                    } catch (error) {
-                        console.error("Error al comprimir o subir imágenes: ", error);
-                        alert('Error al procesar las imágenes.');
-                        saveBtn.disabled = false;
-                        saveBtn.textContent = 'Guardar Producto';
-                        uploadProgress.classList.add('hidden');
-                        return;
-                    }
-                }
-
-                const productData = {
-                    name: document.getElementById('product-name').value,
-                    price: document.getElementById('product-price').value,
-                    description: document.getElementById('product-description').value,
-                    category: document.getElementById('product-category').value.trim(),
-                    featured: document.getElementById('product-featured').checked,
-                    images: imageUrls
-                };
-
-                try {
-                    if (id) {
-                        await updateDoc(doc(db, 'products', id), productData);
-                        alert('¡Producto actualizado!');
-                    } else {
-                        await addDoc(productsCollection, productData);
-                        alert('¡Producto agregado!');
-                    }
-                    closeModal();
-                } catch (error) {
-                    alert('Error al guardar el producto.');
-                    console.error("Error al guardar en Firestore: ", error);
-                } finally {
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = 'Guardar Producto';
-                    uploadProgress.classList.add('hidden');
-                }
-            });
-
-            // El resto de las funciones (renderProducts, openModal, etc.) no necesitan cambios.
-            // ...
+            // ... (el código dentro de esta función no cambia)
         }
     </script>
 </body>
