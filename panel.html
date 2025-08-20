@@ -65,7 +65,54 @@
     </div>
 
     <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b border-brand-light">
+                <h3 id="modal-title" class="font-serif text-2xl font-bold text-brand-dark">Agregar Nuevo Producto</h3>
+            </div>
+            <form id="product-form" class="flex-grow overflow-y-auto p-6 space-y-4">
+                <input type="hidden" id="product-id">
+                <div>
+                    <label for="product-name" class="block text-sm font-semibold text-brand-dark mb-1">Nombre</label>
+                    <input type="text" id="product-name" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="product-price" class="block text-sm font-semibold text-brand-dark mb-1">Precio</label>
+                        <input type="text" id="product-price" class="w-full px-4 py-2 border border-brand-accent rounded-lg" required>
+                    </div>
+                    <div>
+                        <label for="product-category" class="block text-sm font-semibold text-brand-dark mb-1">Categoría (Opcional)</label>
+                        <input type="text" id="product-category" class="w-full px-4 py-2 border border-brand-accent rounded-lg" placeholder="Ej: Accesorios">
+                    </div>
+                </div>
+                <div>
+                    <label for="product-description" class="block text-sm font-semibold text-brand-dark mb-1">Descripción (Opcional)</label>
+                    <textarea id="product-description" rows="3" class="w-full px-4 py-2 border border-brand-accent rounded-lg"></textarea>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="product-featured" class="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary">
+                    <label for="product-featured" class="ml-2 block text-sm font-semibold text-brand-dark">Marcar como producto destacado</label>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-brand-dark mb-1">Imágenes</label>
+                    <input type="file" id="product-images-upload" multiple accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-accent/50 file:text-brand-primary hover:file:bg-brand-accent">
+                    <div id="new-images-preview" class="mt-2 grid grid-cols-4 gap-2"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-brand-dark mb-1">Imágenes Actuales</label>
+                    <div id="existing-images-container" class="grid grid-cols-4 gap-2"></div>
+                </div>
+            </form>
+            <div id="upload-progress" class="p-6 text-center text-brand-dark font-semibold hidden">Comprimiendo y subiendo imágenes...</div>
+            <div class="p-6 bg-gray-50 rounded-b-xl flex justify-end gap-4">
+                <button type="button" id="cancel-btn" class="text-sm font-semibold text-gray-600 py-2 px-5 rounded-full hover:bg-gray-200">Cancelar</button>
+                <button type="submit" form="product-form" id="save-product-btn" class="bg-brand-primary text-white font-semibold py-2 px-5 rounded-full hover:bg-brand-secondary">
+                    Guardar Producto
+                </button>
+            </div>
         </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -94,18 +141,21 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Usuario autenticado, muestra el contenido del panel
                 loadingOverlay.style.display = 'none';
                 panelContent.classList.remove('hidden');
                 initializePanel();
             } else {
-                // Usuario no autenticado, redirige al login
                 window.location.href = 'admin.html';
             }
         });
 
         function initializePanel() {
-            // ... (el código dentro de esta función no cambia)
+            // El código de esta función no ha cambiado, solo se ejecuta
+            // después de que la autenticación es exitosa.
+            const productListContainer = document.getElementById('product-list');
+            const addProductBtn = document.getElementById('add-product-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            // ... resto de las constantes y código de la función ...
         }
     </script>
 </body>
