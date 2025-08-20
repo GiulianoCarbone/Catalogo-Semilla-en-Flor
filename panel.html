@@ -32,10 +32,7 @@
 <body class="bg-brand-light">
 
     <div id="loading-overlay" class="fixed inset-0 bg-brand-light flex items-center justify-center z-50">
-        <div class="text-center p-4">
-            <p class="text-brand-dark font-semibold text-lg">Verificando sesión...</p>
-            <div id="debug-log" class="mt-4 text-sm text-gray-500"></div>
-        </div>
+        <p class="text-brand-dark font-semibold text-lg">Verificando sesión...</p>
     </div>
 
     <div id="panel-content" class="hidden">
@@ -140,38 +137,101 @@
 
         const loadingOverlay = document.getElementById('loading-overlay');
         const panelContent = document.getElementById('panel-content');
-        const debugLog = document.getElementById('debug-log');
-
-        function log(message) {
-            console.log(message);
-            debugLog.innerHTML += `<p>${message}</p>`;
-        }
-
-        log("Página cargada. Verificando estado de autenticación...");
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                log(`Éxito: Usuario autenticado encontrado (${user.email}).`);
-                log("Mostrando panel...");
-                
-                setTimeout(() => { // Pequeña demora para asegurar que todo cargue visualmente
-                    loadingOverlay.style.display = 'none';
-                    panelContent.classList.remove('hidden');
-                    initializePanel();
-                }, 100);
-
+                loadingOverlay.style.display = 'none';
+                panelContent.classList.remove('hidden');
+                initializePanel();
             } else {
-                log("Fallo: No se encontró usuario autenticado.");
-                log("Redirigiendo a la página de login en 3 segundos...");
-                setTimeout(() => {
-                    window.location.href = 'admin.html';
-                }, 3000);
+                window.location.href = 'admin.html';
             }
         });
 
         function initializePanel() {
-            // El código de esta función no ha cambiado
-            // ...
+            console.log("Panel inicializado. Buscando productos...");
+            const productListContainer = document.getElementById('product-list');
+            const addProductBtn = document.getElementById('add-product-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const searchBar = document.getElementById('admin-search-bar');
+
+            let allProducts = [];
+
+            onSnapshot(productsCollection, (snapshot) => {
+                console.log(`Respuesta de Firestore: ${snapshot.size} productos encontrados.`);
+                allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProducts(allProducts);
+            }, (error) => {
+                console.error("Error al obtener productos de Firestore:", error);
+            });
+
+            searchBar.addEventListener('input', () => {
+                const searchTerm = searchBar.value.toLowerCase();
+                const filtered = allProducts.filter(p => p.name && p.name.toLowerCase().includes(searchTerm));
+                renderProducts(filtered);
+            });
+
+            function renderProducts(products) {
+                console.log(`Renderizando ${products.length} productos.`);
+                productListContainer.innerHTML = '';
+                if (products.length === 0) {
+                    productListContainer.innerHTML = `<p class="text-center text-gray-500">Aún no hay productos. Haz clic en "+ Agregar" para crear el primero.</p>`;
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.className = 'w-full text-left';
+                table.innerHTML = `
+                    <thead>
+                        <tr class="border-b border-brand-light">
+                            <th class="p-4 font-semibold">Producto</th>
+                            <th class="p-4 font-semibold">Categoría</th>
+                            <th class="p-4 font-semibold">Precio</th>
+                            <th class="p-4 font-semibold">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+                products.forEach(product => {
+                    const imgSrc = Array.isArray(product.images) && product.images.length ? product.images[0] : 'https://via.placeholder.com/48x48?text=N/A';
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-brand-light/50';
+                    row.innerHTML = `
+                        <td class="p-4 flex items-center gap-4">
+                            <img src="${imgSrc}" alt="${product.name}" class="w-12 h-12 object-cover rounded-md" onerror="this.src='https://via.placeholder.com/48x48?text=Error'">
+                            <span class="font-semibold">${product.name} ${product.featured ? '★' : ''}</span>
+                        </td>
+                        <td class="p-4">${product.category || 'N/A'}</td>
+                        <td class="p-4">${product.price}</td>
+                        <td class="p-4">
+                            <button data-id="${product.id}" class="edit-btn text-sm font-semibold text-brand-primary hover:underline mr-4">Editar</button>
+                            <button data-id="${product.id}" class="delete-btn text-sm font-semibold text-red-500 hover:underline">Eliminar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                productListContainer.appendChild(table);
+            }
+            
+            logoutBtn.addEventListener('click', () => {
+                signOut(auth);
+            });
+
+            productListContainer.addEventListener('click', (event) => {
+                const target = event.target;
+                const id = target.dataset.id;
+                if (target.classList.contains('edit-btn')) {
+                    openModal(id);
+                }
+                if (target.classList.contains('delete-btn')) {
+                    // Lógica para eliminar...
+                }
+            });
+
+            function openModal(productId = null) {
+                // Lógica del modal...
+            }
         }
     </script>
 </body>
