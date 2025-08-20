@@ -50,19 +50,17 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // IMPORTANTE: Pega aquí la misma configuración de Firebase que usas en tus otros archivos
-       const firebaseConfig = {
-  apiKey: "AIzaSyD1UWsKp11n2ZFEHW5LK6zls-AjdywUdTE",
-  authDomain: "semilla-en-flor.firebaseapp.com",
-  projectId: "semilla-en-flor",
-  // ▼▼▼ ESTA ES LA LÍNEA CORREGIDA Y CORRECTA ▼▼▼
-  storageBucket: "semilla-en-flor.firebasestorage.app",
-  messagingSenderId: "435166881891",
-  appId: "1:435166881891:web:aef58261308e357eaeb056",
-  measurementId: "G-NL56E49BTK"
-};
+        const firebaseConfig = {
+          apiKey: "AIzaSyD1UWsKp11n2ZFEHW5LK6zls-AjdywUdTE",
+          authDomain: "semilla-en-flor.firebaseapp.com",
+          projectId: "semilla-en-flor",
+          storageBucket: "semilla-en-flor.firebasestorage.app",
+          messagingSenderId: "435166881891",
+          appId: "1:435166881891:web:aef58261308e357eaeb056",
+          measurementId: "G-NL56E49BTK"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -73,17 +71,21 @@
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('error-message');
             
-            signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    // Login exitoso
-                    sessionStorage.setItem('isAdminAuthenticated', 'true');
-                    window.location.href = 'panel.html';
-                })
-                .catch((error) => {
-                    // Error en el login
-                    errorMessage.textContent = 'Correo o contraseña incorrectos.';
-                    console.error("Error de autenticación:", error);
-                });
+            // ▼▼▼ CAMBIO IMPORTANTE: Le decimos a Firebase que RECUERDE la sesión localmente ▼▼▼
+            setPersistence(auth, browserLocalPersistence)
+              .then(() => {
+                // Ahora que la persistencia está configurada, intentamos el login
+                return signInWithEmailAndPassword(auth, email, password);
+              })
+              .then((userCredential) => {
+                // Login exitoso
+                window.location.href = 'panel.html';
+              })
+              .catch((error) => {
+                // Error en el login
+                errorMessage.textContent = 'Correo o contraseña incorrectos.';
+                console.error("Error de autenticación:", error);
+              });
         });
     </script>
 </body>
