@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tu Emprendimiento - Catálogo de Productos</title>
+    <title>Semilla en Flor - Catálogo de Productos</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -47,19 +47,55 @@
         #hero-slider .slide {
             transition: opacity 1.5s ease-in-out;
         }
+        /* ▼▼▼ ESTILO CORREGIDO PARA LA CINTA DE "DESTACADO" ▼▼▼ */
         .featured-ribbon {
             position: absolute;
-            top: 10px;
-            right: -30px;
-            background-color: #A98870; /* brand-primary */
+            top: 12px; /* Ajuste vertical */
+            right: -34px; /* Ajuste horizontal */
+            width: 140px; /* Ancho fijo para evitar cortes */
+            background-color: #A98870;
             color: white;
-            padding: 4px 30px;
+            padding: 5px 10px;
             font-size: 12px;
             font-weight: 600;
             text-align: center;
             transform: rotate(45deg);
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             z-index: 10;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 140px;
+            background-color: #4a3f35;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -70px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #4a3f35 transparent transparent transparent;
+        }
+        .tooltip .tooltiptext.visible {
+            visibility: visible;
+            opacity: 1;
         }
     </style>
 </head>
@@ -130,9 +166,18 @@
                         <h4 id="product-detail-name" class="font-serif text-4xl font-bold text-brand-dark"></h4>
                         <p id="product-detail-price" class="text-3xl font-semibold text-brand-primary my-4"></p>
                         <p id="product-detail-description" class="text-brand-dark/80 leading-relaxed"></p>
-                        <a id="product-detail-whatsapp-btn" href="#" target="_blank" class="mt-8 w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-full flex items-center justify-center hover:bg-brand-secondary transition-transform hover:scale-105 duration-300 text-lg">
-                            Pedir por WhatsApp
-                        </a>
+                        
+                        <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                            <a id="product-detail-whatsapp-btn" href="#" target="_blank" class="w-full bg-brand-primary text-white font-semibold py-3 px-4 rounded-full flex items-center justify-center hover:bg-brand-secondary transition-transform hover:scale-105 duration-300 text-lg">
+                                Pedir por WhatsApp
+                            </a>
+                            <div class="tooltip">
+                                <button id="share-product-btn" class="w-full bg-gray-200 text-brand-dark font-semibold py-3 px-4 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors duration-300">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg>
+                                </button>
+                                <span class="tooltiptext" id="share-tooltip">¡Enlace copiado!</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -285,6 +330,8 @@
                 const productPrice = document.getElementById('product-detail-price');
                 const productDescription = document.getElementById('product-detail-description');
                 const whatsappBtn = document.getElementById('product-detail-whatsapp-btn');
+                const shareBtn = document.getElementById('share-product-btn');
+                const shareTooltip = document.getElementById('share-tooltip');
 
                 function openModal(productId) {
                     const product = allProducts.find(p => p.id == productId);
@@ -319,6 +366,34 @@
                     const message = encodeURIComponent(`¡Hola! Estoy interesado/a en el producto: ${product.name}`);
                     whatsappBtn.href = `https://wa.me/${whatsappNumber}?text=${message}`;
 
+                    shareBtn.onclick = () => {
+                        const shareData = {
+                            title: `Mira este producto: ${product.name}`,
+                            text: `¡Me encantó este producto de Semilla en Flor! ${product.description || ''}`,
+                            url: window.location.href,
+                        };
+                        if (navigator.share) {
+                            navigator.share(shareData).catch(console.error);
+                        } else {
+                            const textToCopy = `¡Mira este producto de Semilla en Flor! ${product.name} - ${window.location.href}`;
+                            const textArea = document.createElement("textarea");
+                            textArea.value = textToCopy;
+                            document.body.appendChild(textArea);
+                            textArea.focus();
+                            textArea.select();
+                            try {
+                                document.execCommand('copy');
+                                shareTooltip.classList.add('visible');
+                                setTimeout(() => {
+                                    shareTooltip.classList.remove('visible');
+                                }, 2000);
+                            } catch (err) {
+                                console.error('No se pudo copiar el texto: ', err);
+                            }
+                            document.body.removeChild(textArea);
+                        }
+                    };
+
                     modal.classList.remove('hidden');
                     setTimeout(() => {
                         modal.classList.remove('opacity-0');
@@ -349,6 +424,3 @@
     </script>
 </body>
 </html>
-
-
-
