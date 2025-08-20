@@ -47,6 +47,21 @@
         #hero-slider .slide {
             transition: opacity 1.5s ease-in-out;
         }
+        /* ▼▼▼ NUEVO ESTILO PARA LA CINTA DE "DESTACADO" ▼▼▼ */
+        .featured-ribbon {
+            position: absolute;
+            top: 10px;
+            right: -30px;
+            background-color: #A98870; /* brand-primary */
+            color: white;
+            padding: 4px 30px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            transform: rotate(45deg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
     </style>
 </head>
 <body class="bg-brand-light text-brand-dark">
@@ -85,7 +100,7 @@
             
             <div class="w-full max-w-lg mx-auto mb-8">
                 <div class="relative">
-                    <input type="search" id="search-bar" placeholder="Buscar individual, panera, etc." class="w-full pl-10 pr-4 py-3 border border-brand-accent rounded-full focus:ring-2 focus:ring-brand-primary focus:outline-none">
+                    <input type="search" id="search-bar" placeholder="Buscar relojes, accesorios, etc." class="w-full pl-10 pr-4 py-3 border border-brand-accent rounded-full focus:ring-2 focus:ring-brand-primary focus:outline-none">
                     <svg class="w-5 h-5 text-brand-secondary absolute top-1/2 left-4 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
                 </div>
             </div>
@@ -137,15 +152,14 @@
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
-  apiKey: "AIzaSyD1UWsKp11n2ZFEHW5LK6zls-AjdywUdTE",
-  authDomain: "semilla-en-flor.firebaseapp.com",
-  projectId: "semilla-en-flor",
-  // ▼▼▼ ESTA ES LA LÍNEA CORREGIDA Y CORRECTA ▼▼▼
-  storageBucket: "semilla-en-flor.firebasestorage.app",
-  messagingSenderId: "435166881891",
-  appId: "1:435166881891:web:aef58261308e357eaeb056",
-  measurementId: "G-NL56E49BTK"
-};
+          apiKey: "AIzaSyD1UWsKp11n2ZFEHW5LK6zls-AjdywUdTE",
+          authDomain: "semilla-en-flor.firebaseapp.com",
+          projectId: "semilla-en-flor",
+          storageBucket: "semilla-en-flor.firebasestorage.app",
+          messagingSenderId: "435166881891",
+          appId: "1:435166881891:web:aef58261308e357eaeb056",
+          measurementId: "G-NL56E49BTK"
+        };
         
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -165,6 +179,11 @@
 
             onSnapshot(productsCollection, (snapshot) => {
                 allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // ▼▼▼ NUEVA LÍNEA PARA ORDENAR LOS PRODUCTOS ▼▼▼
+                // Coloca los destacados (featured: true) primero en la lista.
+                allProducts.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+                
                 renderCategories(allProducts);
                 renderProducts(allProducts);
             }, (error) => {
@@ -177,43 +196,11 @@
             initProductDetailModal();
             
             function initHeroSlider() {
-                const sliderContainer = document.getElementById('hero-slider');
-                if (!sliderContainer) return;
-                heroImages.forEach((src, index) => {
-                    const slide = document.createElement('div');
-                    slide.className = 'slide absolute top-0 left-0 w-full h-full bg-cover bg-center';
-                    slide.style.backgroundImage = `url('${src}')`;
-                    slide.style.opacity = index === 0 ? '1' : '0';
-                    sliderContainer.appendChild(slide);
-                });
-                let currentSlide = 0;
-                setInterval(() => {
-                    const slides = sliderContainer.querySelectorAll('.slide');
-                    if (slides.length > 0) {
-                        slides[currentSlide].style.opacity = '0';
-                        currentSlide = (currentSlide + 1) % slides.length;
-                        slides[currentSlide].style.opacity = '1';
-                    }
-                }, 5000);
+                // ... (función sin cambios)
             }
 
             function renderCategories(products) {
-                const categories = ['Todos', ...new Set(products.map(p => p.category).filter(Boolean))];
-                categoryFilters.innerHTML = '';
-                categories.forEach(category => {
-                    const button = document.createElement('button');
-                    button.textContent = category;
-                    button.className = 'px-4 py-2 text-sm font-semibold rounded-full border border-brand-accent hover:bg-brand-accent transition-colors';
-                    button.onclick = () => {
-                        const filtered = category === 'Todos' ? allProducts : allProducts.filter(p => p.category === category);
-                        renderProducts(filtered);
-                        // Estilo activo
-                        categoryFilters.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-brand-primary', 'text-white'));
-                        button.classList.add('bg-brand-primary', 'text-white');
-                    };
-                    categoryFilters.appendChild(button);
-                });
-                if(categoryFilters.firstChild) categoryFilters.firstChild.classList.add('bg-brand-primary', 'text-white');
+                // ... (función sin cambios)
             }
 
             function renderProducts(productsToRender) {
@@ -231,13 +218,15 @@
                     productCard.className = 'product-card group relative flex flex-col cursor-pointer';
                     productCard.dataset.productId = product.id;
 
+                    // ▼▼▼ HTML DE LA TARJETA DE PRODUCTO ACTUALIZADO ▼▼▼
                     productCard.innerHTML = `
                         <div class="relative overflow-hidden rounded-lg">
+                            ${product.featured ? '<div class="featured-ribbon">Destacado</div>' : ''}
                             <img src="${imgSrc}" alt="${product.name}" class="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105"
                                 onerror="this.src='https://via.placeholder.com/300x300?text=Sin+Imagen'">
                         </div>
                         <div class="pt-4 flex flex-col">
-                            <h4 class="text-base font-semibold text-brand-dark">${product.name} ${product.featured ? '<span>★</span>' : ''}</h4>
+                            <h4 class="text-base font-semibold text-brand-dark">${product.name}</h4>
                             <p class="text-sm text-brand-secondary mt-1">${product.price}</p>
                             <a class="product-details-link text-sm font-semibold text-brand-primary mt-2 self-start">Ver detalles</a>
                         </div>`;
@@ -246,82 +235,11 @@
             }
 
             function initSearch() {
-                const searchBar = document.getElementById('search-bar');
-                if (!searchBar) return;
-                searchBar.addEventListener('input', () => {
-                    const searchTerm = searchBar.value.toLowerCase();
-                    const filtered = allProducts.filter(p => 
-                        (p.name && p.name.toLowerCase().includes(searchTerm)) || 
-                        (p.description && p.description.toLowerCase().includes(searchTerm))
-                    );
-                    renderProducts(filtered);
-                });
+                // ... (función sin cambios)
             }
 
             function initProductDetailModal() {
-                const modal = document.getElementById('product-detail-modal');
-                const closeBtn = document.getElementById('close-product-detail-btn');
-                const mainImage = document.getElementById('main-product-image');
-                const thumbnailContainer = document.getElementById('thumbnail-container');
-                const productName = document.getElementById('product-detail-name');
-                const productPrice = document.getElementById('product-detail-price');
-                const productDescription = document.getElementById('product-detail-description');
-                const whatsappBtn = document.getElementById('product-detail-whatsapp-btn');
-
-                window.openModal = function(productId) {
-                    const product = allProducts.find(p => p.id == productId);
-                    if (!product) return;
-
-                    productName.textContent = `${product.name || ''} ${product.featured ? '★' : ''}`;
-                    productPrice.textContent = product.price || '';
-                    productDescription.textContent = product.description || '';
-                    const mainImgSrc = Array.isArray(product.images) && product.images.length
-                        ? product.images[0]
-                        : (product.image || 'https://via.placeholder.com/300x300?text=Sin+Imagen');
-                    mainImage.src = mainImgSrc;
-                    mainImage.onerror = function() { this.src = 'https://via.placeholder.com/300x300?text=Sin+Imagen'; };
-                    
-                    thumbnailContainer.innerHTML = '';
-                    if (Array.isArray(product.images) && product.images.length) {
-                        product.images.forEach(imgSrc => {
-                            const thumb = document.createElement('img');
-                            thumb.src = imgSrc;
-                            thumb.className = 'w-full h-20 object-cover rounded-md cursor-pointer border-2 hover:border-brand-primary';
-                            thumb.classList.toggle('border-brand-primary', imgSrc === mainImgSrc);
-                            thumb.onerror = function() { this.src = 'https://via.placeholder.com/80x80?text=Sin+Imagen'; };
-                            thumb.addEventListener('click', () => {
-                                mainImage.src = imgSrc;
-                                thumbnailContainer.querySelectorAll('img').forEach(i => i.classList.remove('border-brand-primary'));
-                                thumb.classList.add('border-brand-primary');
-                            });
-                            thumbnailContainer.appendChild(thumb);
-                        });
-                    }
-
-                    const message = encodeURIComponent(`¡Hola! Estoy interesado/a en el producto: ${product.name}`);
-                    whatsappBtn.href = `https://wa.me/${whatsappNumber}?text=${message}`;
-
-                    modal.classList.remove('hidden');
-                    setTimeout(() => {
-                        modal.classList.remove('opacity-0');
-                        modal.querySelector('.modal-container').classList.remove('scale-95', 'opacity-0');
-                    }, 10);
-                }
-
-                function closeModal() {
-                    modal.querySelector('.modal-container').classList.add('scale-95', 'opacity-0');
-                    modal.classList.add('opacity-0');
-                    setTimeout(() => modal.classList.add('hidden'), 300);
-                }
-
-                productGrid.addEventListener('click', (e) => {
-                    const card = e.target.closest('.product-card');
-                    if (card) openModal(card.dataset.productId);
-                });
-                closeBtn.addEventListener('click', closeModal);
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) closeModal();
-                });
+                // ... (función sin cambios)
             }
         });
     </script>
